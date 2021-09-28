@@ -1,12 +1,15 @@
 # FSIV-2122
 Directorio de la asignatura de Fundamentos de Sistemas en Vision
+
 # COMPILACION DE UNA PRACTICA USANDO QTCREATOR
+
   1) Abrimos qtCreator y seleccionamos <Welcome -> Open -> Open Creator>
   2) Navegamos hasta la carpeta de practicas y seleccionamos el fichero <CMakeList.txt>
   3) Configuramos el proyecto ( se recomienda usar solo las configuraciones <Release,Debug> )
   4) Pulsamos sobre el icono <martillo> para compilar el proyecto
 
  # COMPILACION DE UNA PRACTICA USANDO TERMINAL
+  
   1) Accedemos a la carpeta del proyecto
   2) Creamos la carpeta build -> mkdir build
   3) Creamos el proyect -> cd build; cmake ..
@@ -31,3 +34,6 @@ Directorio de la asignatura de Fundamentos de Sistemas en Vision
       static_cast <int*> (datos_usuarios) [0] = x
       static_cast <int*> (datos_usuarios) [1] = y
     } 
+  9) Abrir un video
+    9.1) vid.open (nombre_video)
+    9.2) vid.open (camera_idx)
