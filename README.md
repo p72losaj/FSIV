@@ -36,10 +36,16 @@ Directorio de la asignatura de Fundamentos de Sistemas en Vision
   
   7) Obtener una imagen como argumento -> cv::String nombre_imagen = parser.get <cv::String> ("@imagen")
   8) Gestion del raton
-    void on_mouse(int evento, int x, int y, int estado_raton, void* datos_usuario){
-      static_cast <int*> (datos_usuarios) [0] = x
-      static_cast <int*> (datos_usuarios) [1] = y
-    } 
+    
+  void on_mouse(int evento, int x, int y, int estado_raton, void* datos_usuario){
+  
+  static_cast <int*> (datos_usuarios) [0] = x
+  
+  static_cast <int*> (datos_usuarios) [1] = y
+  
+  } 
   9) Abrir un video
-    9.1) vid.open (nombre_video)
-    9.2) vid.open (camera_idx)
+  
+  9.1) vid.open (nombre_video)
+  
+  9.2) vid.open (camera_idx)
