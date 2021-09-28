@@ -21,3 +21,13 @@ Directorio de la asignatura de Fundamentos de Sistemas en Vision
     3.1) cv::Mat img = cv::imread (nombre_imagen, cv::IMREAD_ANYCOLOR)
     3.2) cv::Mat img = cv::imread (nombre_imagen, cv::IMREAD_GRAYSCALE)
     3.3) cv::Mat img = cv::imread (nombre_imagen, cv::IMREAD_COLOR)
+  4) Crear una ventana grafica -> cv:: namedWindow ("imagen", cv::WINDOW_GUI_EXPANDED)
+  5) Guardar canales como matriz y enlazarlo a una imagen -> cv::split (cv::Mat imagen, std::vector <cv::Mat> nombre_canales)
+  6) Obtener valores de un canal
+    6.1) Obtener los valores min y maximo del canal -> cv::minMaxIdx (canal,&min,&max)
+  7) Obtener una imagen como argumento -> cv::String nombre_imagen = parser.get <cv::String> ("@imagen")
+  8) Gestion del raton
+    void on_mouse(int evento, int x, int y, int estado_raton, void* datos_usuario){
+      static_cast <int*> (datos_usuarios) [0] = x
+      static_cast <int*> (datos_usuarios) [1] = y
+    } 
