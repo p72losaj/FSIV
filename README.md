@@ -44,6 +44,7 @@ Directorio de la asignatura de Fundamentos de Sistemas en Vision
   static_cast <int*> (datos_usuarios) [1] = y
   
   } 
+ 
   9) Abrir un video
   
   9.1) vid.open (nombre_video)
