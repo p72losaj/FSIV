@@ -21,9 +21,9 @@ Directorio de la asignatura de Fundamentos de Sistemas en Vision
   1) Crear un gestor de la linea de comandos -> cv::ComandLineParser(argc,argv,keys)
   2) Indicar el nombre del programa -> parser.about(nombre_programa)
   3) Cargar una imagen
-    3.1) cv::Mat img = cv::imread (nombre_imagen, cv::IMREAD_ANYCOLOR)
-    3.2) cv::Mat img = cv::imread (nombre_imagen, cv::IMREAD_GRAYSCALE)
-    3.3) cv::Mat img = cv::imread (nombre_imagen, cv::IMREAD_COLOR)
+    a) cv::Mat img = cv::imread (nombre_imagen, cv::IMREAD_ANYCOLOR)
+    b) cv::Mat img = cv::imread (nombre_imagen, cv::IMREAD_GRAYSCALE)
+    c) cv::Mat img = cv::imread (nombre_imagen, cv::IMREAD_COLOR)
   4) Crear una ventana grafica -> cv:: namedWindow ("imagen", cv::WINDOW_GUI_EXPANDED)
   5) Guardar canales como matriz y enlazarlo a una imagen -> cv::split (cv::Mat imagen, std::vector <cv::Mat> nombre_canales)
   6) Obtener valores de un canal
