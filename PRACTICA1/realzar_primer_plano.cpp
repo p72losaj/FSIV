@@ -13,6 +13,8 @@
 #include <exception>
 #include <sstream>
 
+using namespace std;
+
 //Includes para OpenCV, Descomentar según los módulo utilizados.
 #include <opencv2/core/core.hpp>
 #include <opencv2/core/utility.hpp>
@@ -32,6 +34,8 @@ const cv::String keys =
     "{@output        | <none> | output image.}"
     ;
 
+void CallBackFunc(int event, int x, int y, int flags, void* userdata);
+
 int
 main (int argc, char* const* argv)
 {
@@ -45,6 +49,8 @@ main (int argc, char* const* argv)
             parser.printMessage();
             return EXIT_SUCCESS;
         }
+
+
 
         cv::String input_n = parser.get<cv::String>("@input");
         cv::String output_n = parser.get<cv::String>("@output");
@@ -66,14 +72,56 @@ main (int argc, char* const* argv)
 
         //TODO
 
-
-
-        //
-
         cv::namedWindow("INPUT", cv::WINDOW_GUI_EXPANDED);
         cv::imshow("INPUT", in);
         cv::namedWindow("MASK",  cv::WINDOW_GUI_EXPANDED);
         cv::imshow("MASK", mask);
+
+        // Obtenemos los puntos del rectangulo
+
+       // cv::setMouseCallback("INPUT", CallBackFunc, NULL);
+
+       out = convert_rgb_to_gray(in); // Transformamos la imagen de entrada
+
+       out = convert_gray_to_rgb(out); // Obtenemos la imagen de salida
+
+       int puntero[4]; // Vector de 4 puntos
+
+
+       int opcion;
+
+       // Introducimos la opcion deseada
+
+       std::cout << "Introduce una opcion: " << std::endl;
+
+       std::cout << "1. Seleccionar una region rectangular" <<std::endl;
+
+       std::cout << "2. Seleccionar un circulo" << std::endl;
+
+       std::cout << "3. Seleccionar un poligono" << std::endl;
+
+       std::cin >> opcion;
+
+        if(opcion == 1){
+            // Generamos la mascara del rectangulo
+            mask = generate_rectagle_mask(in.cols,in.rows,100,50,200,200,in.type());
+        }
+
+        else if(opcion == 2){
+            mask = generate_circle_mask(in.cols, in.rows, 100, 50, 50, in.type());
+        }
+
+        else if(opcion == 3){
+
+        }
+
+        // Combinamos las imagenes
+
+        out = combine_images(in,out,mask);
+
+        //
+
+
         cv::namedWindow("OUTPUT",  cv::WINDOW_GUI_EXPANDED);
         cv::imshow("OUTPUT", out);
 
@@ -87,4 +135,22 @@ main (int argc, char* const* argv)
         retCode = EXIT_FAILURE;
     }
     return retCode;
+}
+
+void CallBackFunc(int event, int x, int y, int flags, void* userdata)
+{
+
+     if  ( event == cv::EVENT_LBUTTONDOWN )
+     {
+          std::cout << "Left button of the mouse is clicked - position (" << x << ", " << y << ")" << std::endl;
+     }
+     else if  ( event == cv::EVENT_RBUTTONDOWN )
+     {
+          std::cout << "Right button of the mouse is clicked - position (" << x << ", " << y << ")" << std::endl;
+     }
+     else if  ( event == cv::EVENT_MBUTTONDOWN )
+     {
+          std::cout << "Middle button of the mouse is clicked - position (" << x << ", " << y << ")" << std::endl;
+     }
+
 }

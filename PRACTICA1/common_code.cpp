@@ -8,7 +8,7 @@ convert_gray_to_rgb(const cv::Mat& img)
     cv::Mat out;
 
     //TODO
-
+        cvtColor(img, out, cv::COLOR_GRAY2RGB);
     //
 
     CV_Assert(out.channels()==3);
@@ -24,7 +24,7 @@ convert_rgb_to_gray(const cv::Mat& img)
     CV_Assert(img.channels()==3);
     cv::Mat out;
     //TODO
-
+    cvtColor(img, out, cv::COLOR_RGB2GRAY);
     //
     CV_Assert(out.channels()==1);
     CV_Assert(img.rows==out.rows && img.cols==out.cols);
@@ -42,8 +42,10 @@ generate_rectagle_mask(int img_width, int img_height,
     CV_Assert(rect_width>0 && rect_height>0);
     cv::Mat mask;
     //TODO
-
-
+    mask = cv::Mat::zeros(img_height,img_width,type); // Obtenemos la imagen de mascara
+    cv::Point ptr1(x,y); // Obtenemos las coordenadas de los verticas
+    cv::Point ptr2(x+rect_width, x+rect_height); // Obtenemos las lineas que unen los vertices del rectangulo
+    cv::rectangle(mask,ptr1,ptr2,cv::Scalar(255,255,255), cv::FILLED); // Creamos el rectangulo
     //
     CV_Assert(mask.rows==img_height && mask.cols==img_width);
     CV_Assert(mask.type()==type);
@@ -61,6 +63,15 @@ generate_circle_mask(int img_width, int img_height,
     cv::Mat mask;
     //TODO
 
+    mask = cv::Mat::zeros(img_height,img_width,type); // Obtenemos la imagen de mascara
+
+    // Obtenemos el punto centro del circulo
+
+    cv::Point centro(x,y);
+
+    // Generamos el circulo
+
+    cv::circle(mask,centro,radius,cv::Scalar(255,255,255), cv::FILLED);
 
     //
     CV_Assert(mask.rows==img_height && mask.cols==img_width);
@@ -79,7 +90,11 @@ generate_polygon_mask(int img_width, int img_height,
     std::vector< std::vector<cv::Point> > polys;
     //TODO
 
+    mask = cv::Mat::zeros(img_height,img_width,type); // Obtenemos la imagen de mascara
 
+    // Llenamos el poligono
+
+    cv::fillPoly(mask,points,cv::Scalar(255,255,255));
 
     //
     CV_Assert(mask.rows==img_height && mask.cols==img_width);
@@ -100,6 +115,16 @@ combine_images(const cv::Mat& foreground, const cv::Mat& background,
     cv::Mat output;
     //TODO
 
+    // Creamos las mascaras de union
+    cv::Mat mascaraAND1, mascaraAND2, mascaraNegada1;
+
+    cv::bitwise_and(foreground,mask,mascaraAND1);
+
+    cv::bitwise_not(mask,mascaraNegada1); // Negamos la mascara de la imagen foregorund
+
+    cv::bitwise_and(background,mascaraNegada1,mascaraAND2);
+
+    cv::bitwise_or(mascaraAND1,mascaraAND2,output);
 
     //
     CV_Assert(output.rows == foreground.rows && output.cols==foreground.cols);
