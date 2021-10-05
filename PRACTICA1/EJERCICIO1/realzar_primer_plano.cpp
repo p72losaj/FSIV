@@ -50,8 +50,6 @@ main (int argc, char* const* argv)
             return EXIT_SUCCESS;
         }
 
-
-
         cv::String input_n = parser.get<cv::String>("@input");
         cv::String output_n = parser.get<cv::String>("@output");
         if (!parser.check())
@@ -85,37 +83,80 @@ main (int argc, char* const* argv)
 
        out = convert_gray_to_rgb(out); // Obtenemos la imagen de salida
 
-       int puntero[4]; // Vector de 4 puntos
+       // Modo por linea de comandos
 
+       // Modo rectangulo
 
-       int opcion;
+       if(parser.get<std::string>("r")!="x,y,w,h") //Así que el usuario a puesto -r=.... en la linea de comandos.
+       {
+           int x,y,width,height;
+           char sep;
+           std::istringstream buffer(parser.get<std::string>("r"));
+           buffer>>x>>sep>>y>>sep>>width>>sep>>height;
 
-       // Introducimos la opcion deseada
+           if(!buffer)
+           {
 
-       std::cout << "Introduce una opcion: " << std::endl;
+               std::cerr << "Error:option'-r'incorrect."<<std::endl;
+               return EXIT_FAILURE;
+           }
+           mask=generate_rectagle_mask(in.cols,in.rows,x,y,width,height,in.type()); // genera la mascara del rectangulo
+           // mask = generate_rectagle_mask(in.cols,in.rows,100,50,200,200,in.type());
+       }
 
-       std::cout << "1. Seleccionar una region rectangular" <<std::endl;
+       // Modo circulo
 
-       std::cout << "2. Seleccionar un circulo" << std::endl;
+       else if(parser.get<std::string>("c")!="x,y,r") //Así que el usuario a puesto -c=.... en la linea de comandos.
+       {
+           int x,y,radius;
+           char sep;
+           std::istringstream buffer(parser.get<std::string>("c"));
+           std::cerr << "Estoy en circulo y buffer: " << parser.get<std::string>("c") <<std::endl;
+           buffer>>x>>sep>>y>>sep>>radius;
 
-       std::cout << "3. Seleccionar un poligono" << std::endl;
+           if(!buffer)
+           {
 
-       std::cin >> opcion;
+               std::cerr << "Error:option'-c'incorrect."<<std::endl;
+               return EXIT_FAILURE;
+           }
+           mask=generate_circle_mask(in.cols,in.rows,x,y,radius,in.type()); // genera la mascara del rectangulo
 
-        if(opcion == 1){
-            // Generamos la mascara del rectangulo
-            mask = generate_rectagle_mask(in.cols,in.rows,100,50,200,200,in.type());
-        }
+       }
 
-        else if(opcion == 2){
-            mask = generate_circle_mask(in.cols, in.rows, 100, 50, 50, in.type());
-        }
+       // Modo poligono cerrado
 
-        else if(opcion == 3){
+       else if(parser.get<std::string>("p")!="x1,y1,x2,y2,x3,y3") //Así que el usuario a puesto -p=.... en la linea de comandos.
+       {
+           int x,y;
+           char sep;
+           std::istringstream buffer(parser.get<std::string>("p"));
 
-        }
+           if(!buffer)
+           {
+               std::cerr << "Error:option'-p'incorrect."<<std::endl;
+               return EXIT_FAILURE;
+           }
 
-        // Combinamos las imagenes
+           std::vector<cv::Point> puntos;
+
+           do{
+                buffer >> x >> sep >> y >> sep;
+                cv::Point punto(x,y);
+                puntos.push_back(punto);
+           }while(buffer);
+
+           if(puntos.size() > 2){
+               mask=generate_polygon_mask(in.cols,in.rows,puntos,in.type());
+           }
+
+           else{
+               std::cerr << "No es poligono" << std::endl;
+           }
+
+       }
+
+       // Combinamos las imagenes
 
         out = combine_images(in,out,mask);
 
