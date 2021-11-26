@@ -137,3 +137,37 @@ fsiv_combine_images(const cv::Mat src1, const cv::Mat src2,
     CV_Assert(ret_v.cols==src2.cols);
     return ret_v;
 }
+
+cv::Mat
+fsiv_usm_enhance(cv::Mat  const& in, double g, int r,
+                 int filter_type, bool circular, cv::Mat *unsharp_mask)
+{
+    CV_Assert(!in.empty());
+    CV_Assert(in.type()==CV_32FC1);
+    CV_Assert(r>0);
+    CV_Assert(filter_type>=0 && filter_type<=1);
+    CV_Assert(g>=0.0);
+    cv::Mat ret_v;
+    //TODO
+    //Hint: use your own functions fsiv_xxxx
+    // Creamos las imagenes
+    cv::Mat f, expand;
+    // Se aplica un filtro de caja
+    if (filter_type == 0){f = fsiv_create_box_filter(r);}
+    // Se aplica un filtro de gauss
+    else {f = fsiv_create_gaussian_filter(r);}
+    // Se aplica una fill expansion
+    if (!circular){expand = fsiv_fill_expansion(in, r);}
+    // Se aplica una expansion circular
+    else {expand = fsiv_circular_expansion(in, r);}
+    // Aplicamos el filtro 2D sobre las imagenes anteriores
+    cv::Mat conv = fsiv_filter2D(expand, f);
+    ret_v = (g+1) * in - (g * conv);
+    // save the unsharp mask used
+    if (unsharp_mask) *unsharp_mask = conv;
+    //
+    CV_Assert(ret_v.rows==in.rows);
+    CV_Assert(ret_v.cols==in.cols);
+    CV_Assert(ret_v.type()==CV_32FC1);
+    return ret_v;
+}
