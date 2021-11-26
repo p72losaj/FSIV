@@ -1,0 +1,136 @@
+#include <iostream>
+#include "common_code.hpp"
+
+cv::Mat
+fsiv_compute_histogram(const cv::Mat& in, cv::Mat& hist)
+{
+    CV_Assert(in.type()==CV_8UC1);
+    CV_Assert(hist.empty() ||(hist.type()==CV_32FC1 &&
+                              hist.rows==256 && hist.cols==1));
+    //TODO
+    //Tienes dos alternativas:
+    //1- Implementar un recorrido por la imagen y calcular el histograma.
+    //2- Usar la función cv::calcHist.
+    //Sugerencia: implementa las dos para comparar.
+
+
+        std::vector<cv::Mat> canales; // Creamos un vector de canales
+
+        cv::split(in, canales); //Guardamos cada canal como una matriz diferente. Lo enlazamos con la imagen de entrada
+
+        // Rangos del histograma
+
+        float range[] = {0,256};
+
+        const float* ranges = { range };
+
+        int divisiones = 256; // Numero de subdivisiones del histograma [0,256]
+
+        cv::calcHist(&canales[0], 1, 0, cv::Mat(), hist, 1, &divisiones, &ranges); // Calculamos el histograma
+
+    //
+
+    CV_Assert(hist.type()==CV_32FC1);
+    CV_Assert(hist.rows==256 && hist.cols==1);
+    return hist;
+}
+
+void
+fsiv_normalize_histogram(cv::Mat& hist)
+{
+    CV_Assert(hist.type()==CV_32FC1);
+    CV_Assert(hist.rows==256 && hist.cols==1);
+
+    //TODO
+
+     cv::normalize(hist, hist, 1, 0, cv::NORM_L1);
+
+
+    //
+    CV_Assert(hist.type()==CV_32FC1);
+    CV_Assert(hist.rows==256 && hist.cols==1);
+}
+
+void
+fsiv_accumulate_histogram(cv::Mat& hist)
+{
+    CV_Assert(hist.type()==CV_32FC1);
+    CV_Assert(hist.rows==256 && hist.cols==1);
+
+    //TODO
+    cv::Mat copia(hist.size(), hist.type());
+
+    copia.at<float>(0) = hist.at<float>(0);
+
+    for(size_t i = 1; i < hist.rows; i++){
+        copia.at<float>(i) = hist.at<float>(i) + copia.at<float>(i-1);
+    }
+    hist = copia;
+
+    //
+}
+
+cv::Mat
+fsiv_create_equalization_lookup_table(const cv::Mat& hist,
+                                      bool hold_median)
+{
+    CV_Assert(hist.type()==CV_32FC1);
+    CV_Assert(hist.rows==256 && hist.cols==1);
+    cv::Mat lkt;
+    //TODO
+    //Usa las funciones fsiv_normalize_histogram y fsiv_accumulate_histogram
+    //para construir la tabla.
+    lkt = hist.clone(); // Realizamos una copia de la imagen
+    fsiv_normalize_histogram(lkt); // Normalizamos la imagen
+    fsiv_accumulate_histogram(lkt); // Obtenemos el histograma acumulativo
+
+    lkt.convertTo(lkt,CV_8UC1,255.0,0.0);// Transformamos la imagen lkt en CV_8UC1
+    //
+
+    CV_Assert(lkt.type()==CV_8UC1);
+    CV_Assert(lkt.rows==256 && lkt.cols==1);
+    return lkt;
+}
+
+cv::Mat
+fsiv_apply_lookup_table(const cv::Mat&in, const cv::Mat& lkt,
+                        cv::Mat& out)
+{
+    CV_Assert(in.type()==CV_8UC1);
+    CV_Assert(lkt.type()==CV_8UC1);
+    CV_Assert(lkt.rows==256 && lkt.cols==1);
+    CV_Assert(out.empty() || (out.type()==CV_8UC1 &&
+                              out.rows==in.rows && out.cols==in.cols));
+
+    //TODO
+    out = in.clone();// Realizamos una copia de la imagen de entrada
+    // Filas de la imagen
+    for(int i=0; i < in.rows; i++){
+        // Columnas de la imagen
+        for(int j=0; j < in.cols; j++){
+            out.at<unsigned char>(i,j) = lkt.at<unsigned char>(in.at<unsigned char>(i,j),0);
+        }
+    }
+    //
+    CV_Assert(out.rows ==in.rows && out.cols==in.cols && out.type()==in.type());
+    return out;
+}
+
+cv::Mat
+fsiv_image_equalization(const cv::Mat& in, cv::Mat& out,
+                    bool hold_median, int radius)
+{
+    CV_Assert(in.type()==CV_8UC1);
+    //TODO
+    //Utiliza las funciones fsiv_compute_histogram,
+    //fsiv_create_equalization_lookup_table y fsiv_apply_lookup_table
+    //
+
+    cv::Mat hist,lkt; // Creamos las imagenes hist y lkt
+    hist = fsiv_compute_histogram(in,hist); // Generamos el histograma
+    lkt = fsiv_create_equalization_lookup_table(hist,hold_median); // Creamos la tabla de equalizacion del histograma
+    out = fsiv_apply_lookup_table(in,lkt,out); // Aplicamos la tabla de equalizacion
+    //
+    CV_Assert(out.rows==in.rows && out.cols==in.cols && out.type()==in.type());
+    return out;
+}
