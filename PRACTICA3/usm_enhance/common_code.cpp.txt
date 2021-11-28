@@ -162,6 +162,7 @@ fsiv_usm_enhance(cv::Mat  const& in, double g, int r,
     else {expand = fsiv_circular_expansion(in, r);}
     // Aplicamos el filtro 2D sobre las imagenes anteriores
     cv::Mat conv = fsiv_filter2D(expand, f);
+	// Aplicamos la ganancia a la imagen de salida
     ret_v = (g+1) * in - (g * conv);
     // save the unsharp mask used
     if (unsharp_mask) *unsharp_mask = conv;
