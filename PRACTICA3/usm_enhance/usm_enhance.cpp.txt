@@ -62,9 +62,9 @@ main (int argc, char* const* argv)
         bool circular =false;
 
         cv::Mat in = cv::imread(input_n, cv::IMREAD_UNCHANGED);
-        in.convertTo(in,CV_32FC1);
-        std::cout << CV_32FC1 << std::endl;
-        std::cout << in.type() << std::endl;
+        cv::Mat mask = in.clone();
+        cv::Mat out = in.clone();
+        in.convertTo(in, CV_32F,1.0/255.0);
 
         // Comprobamos si se desea aplicar una convolucion circular
         if(parser.has("c")) {circular = true;}
@@ -95,6 +95,23 @@ main (int argc, char* const* argv)
             buffer >> r;
             if(!buffer){std::cerr << "Error: option 'r' incorrect" << std::endl;}
         }
+
+        // Transformamos la imagen a HSV
+
+        cv::cvtColor(in,in, cv::COLOR_BGR2HSV);
+
+        // Creamos un vector de canales
+
+        std::vector<cv::Mat> canales;
+
+        //Guardamos cada canal como una matriz diferente. Lo enlazamos con la imagen1
+        cv::split(in, canales);
+        // Aplicamos usm_enhance en la imagen de mascara
+        canales[2] = fsiv_usm_enhance(canales[2], g, r, filter_type, circular, &mask);
+        cv::merge(canales,out);
+        cv::cvtColor(out,out,cv::COLOR_HSV2BGR);
+        in = cv::imread(input_n, cv::IMREAD_UNCHANGED);
+
         //
 
         if (in.empty())
@@ -108,10 +125,10 @@ main (int argc, char* const* argv)
         cv::namedWindow("OUTPUT");
         cv::namedWindow("UNSHARP MASK");
 
-        cv::Mat out = in.clone();
-        cv::Mat mask = in.clone();
+        //cv::Mat out = in.clone();
+        //cv::Mat mask = in.clone();
 
-        out = fsiv_usm_enhance(in, g, r, filter_type, circular, &mask);
+        // out = fsiv_usm_enhance(in, g, r, filter_type, circular, &mask);
 
         cv::imshow ("INPUT", in);
         cv::imshow ("OUTPUT", out);
