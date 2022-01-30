@@ -1,0 +1,16 @@
+Se ha implementado las siguientes funciones:
+
+fsiv_create_gaussian_filter
+
+fsiv_fill_expansion: Para ello, no se utiliza el comando -c
+
+fsiv_circular_expansion: Para ello, se utiliza el comando -c
+
+fsiv_filter2D
+
+fsiv_create_laplacian_filter
+
+fsiv_extend_image
+
+Comandos: ./sharpen -f=2 -r1=4 -r2=8 -c=1 ../data/ciclista_original.jpg .
+
