@@ -1,0 +1,4 @@
+/home/jaime/Escritorio/LOCAL/FSIV/PRACTICA1/realzar_primer_plano/CMakeFiles/rebuild_cache.dir
+/home/jaime/Escritorio/LOCAL/FSIV/PRACTICA1/realzar_primer_plano/CMakeFiles/edit_cache.dir
+/home/jaime/Escritorio/LOCAL/FSIV/PRACTICA1/realzar_primer_plano/CMakeFiles/test_common_code.dir
+/home/jaime/Escritorio/LOCAL/FSIV/PRACTICA1/realzar_primer_plano/CMakeFiles/realzar_primer_plano.dir
