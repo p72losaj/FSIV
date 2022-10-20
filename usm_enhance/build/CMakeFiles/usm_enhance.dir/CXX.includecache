@@ -1,0 +1,16 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/jaime/Escritorio/LOCAL/FSIV/Practica3/ejercicio1/usm_enhance/common_code.cpp
+common_code.hpp
+/home/jaime/Escritorio/LOCAL/FSIV/Practica3/ejercicio1/usm_enhance/common_code.hpp
+
+/home/jaime/Escritorio/LOCAL/FSIV/Practica3/ejercicio1/usm_enhance/common_code.hpp
+opencv2/core.hpp
+-
+

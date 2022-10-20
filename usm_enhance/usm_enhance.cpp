@@ -273,12 +273,14 @@ main (int argc, char* const* argv)
         in.convertTo(in, CV_32FC1, 1/255.0);
 
         if(in.channels()==3){
-
+            // Transformamos la imagen BGR en HSV
             cv::cvtColor(in, in, cv::COLOR_BGR2HSV);
             std::vector <cv::Mat> channels;
             cv::split(in, channels);
+            // Aplicamos usm_enhance al canal V
             channels[2] = fsiv_usm_enhance(channels[2], g, r, filter_type, circular, &mask);
             cv::merge(channels, out);
+            // Transformamos la imagen HSV en BGR
             cv::cvtColor(out, out, cv::COLOR_HSV2BGR);
         }
 

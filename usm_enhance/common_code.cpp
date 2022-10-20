@@ -5,8 +5,7 @@ fsiv_create_box_filter(const int r)
 {
     CV_Assert(r>0);
     cv::Mat ret_v;
-    //TODO 
-    // create a box filter of size 2*r+1
+    //TODO
     float size = 2*r+1;
     ret_v = cv::Mat::ones(size, size, CV_32F) / pow(size,2);
     //
@@ -22,7 +21,7 @@ fsiv_create_gaussian_filter(const int r)
     CV_Assert(r>0);
     cv::Mat ret_v;
     //TODO: Remenber 6*sigma is approx 99,73% of the distribution.
-    // create a gaussian filter of size 2*r+1
+
     float size = 2*r+1;
     float a = 1.0/(2.0*M_PI*pow(size/6.0,2));
     ret_v = cv::Mat(size, size, CV_32FC1);
@@ -32,7 +31,8 @@ fsiv_create_gaussian_filter(const int r)
             ret_v.at<float>(i, j) = a * exp(b);
             }
         }
-        ret_v /= (cv::sum(ret_v));
+    ret_v /= (cv::sum(ret_v));
+
     //
     CV_Assert(ret_v.type()==CV_32FC1);
     CV_Assert(ret_v.rows==(2*r+1) && ret_v.rows==ret_v.cols);
@@ -49,6 +49,7 @@ fsiv_fill_expansion(cv::Mat const& in, const int r)
     //TODO:
     //Use of cv::copyMakeBorder is not allowed.
     //Hint you don't need use any for sentence.
+
     if(in.type() == CV_32FC1){
         ret_v = cv::Mat::zeros(in.rows+2*r, in.cols+2*r, CV_32FC1);
     }
@@ -59,7 +60,6 @@ fsiv_fill_expansion(cv::Mat const& in, const int r)
 
     cv::Rect rectangulo(r, r, in.cols, in.rows); // (x, y, width, height)
     in.copyTo(ret_v(rectangulo)); // copia la imagen en el centro de la imagen de salida
-
     //
     CV_Assert(ret_v.type()==in.type());
     CV_Assert(ret_v.rows == in.rows+2*r);
@@ -77,18 +77,15 @@ fsiv_circular_expansion(cv::Mat const& in, const int r)
     //Use of cv::copyMakeBorder is not allowed.
     //Hint you don't need use any "for" sentence, only 9 copyTo from "in"
     // rois to "ret_v" rois.
-    
+
     // Expansion de la imagen original
-    ret_v = fsiv_fill_expansion(in, r); 
-    
+    ret_v = fsiv_fill_expansion(in, r);    
     // expansion superior e inferior
     in(cv::Rect(0,0,in.cols,r)).copyTo(ret_v(cv::Rect(r, ret_v.rows-r, in.cols,r)));
     in(cv::Rect(0,in.rows-r,in.cols,r)).copyTo(ret_v(cv::Rect(r, 0, in.cols,r)));
-    
     // expansion lateral
     in(cv::Rect(0,0,r,in.rows)).copyTo(ret_v(cv::Rect(ret_v.cols-r,r,r,in.rows)));
     in(cv::Rect(in.cols-r,0,r,in.rows)).copyTo(ret_v(cv::Rect(0,r,r,in.rows)));
-    
     // expansion en las esquinas
     in(cv::Rect(0,0,r,r)).copyTo(ret_v(cv::Rect(ret_v.cols-r,ret_v.rows-r,r,r)));
     in(cv::Rect(in.cols-r,in.rows-r,r,r)).copyTo(ret_v(cv::Rect(0,0,r,r)));
@@ -117,7 +114,7 @@ fsiv_filter2D(cv::Mat const& in, cv::Mat const& filter)
     CV_Assert(in.type()==CV_32FC1 && filter.type()==CV_32FC1);
     cv::Mat ret_v;
     //TODO
-    ret_v = cv::Mat::zeros((in.rows-2*(filter.rows/2)), (in.cols-2*(filter.cols/2)), CV_32FC1);
+ret_v = cv::Mat::zeros((in.rows-2*(filter.rows/2)), (in.cols-2*(filter.cols/2)), CV_32FC1);
     // Aplicamos el fliltro 2D a la nueva imagen
     for (int i = 0; i < ret_v.rows; ++i) {
         for (int j = 0; j < ret_v.cols; ++j){
@@ -140,7 +137,8 @@ fsiv_combine_images(const cv::Mat src1, const cv::Mat src2,
     CV_Assert(src1.cols==src2.cols);
     cv::Mat ret_v;
     //TODO
-        ret_v = src1.mul(a) + src2.mul(b);
+  ret_v = src1.mul(a) + src2.mul(b);
+
     //
     CV_Assert(ret_v.type()==src2.type());
     CV_Assert(ret_v.rows==src2.rows);
@@ -160,7 +158,8 @@ fsiv_usm_enhance(cv::Mat  const& in, double g, int r,
     cv::Mat ret_v;
     //TODO
     //Hint: use your own functions fsiv_xxxx
-    cv::Mat filtro, expansion;
+
+cv::Mat filtro, expansion;
     // Aplicamos los filtros
     if(filter_type == 0){
         filtro = fsiv_create_box_filter(r);
