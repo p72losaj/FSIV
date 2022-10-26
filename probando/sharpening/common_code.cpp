@@ -126,41 +126,43 @@ fsiv_image_sharpening(const cv::Mat& in, int filter_type, bool only_luma,
     //  and then clip the result.
 
     // Creamos el filtro
-
     cv::Mat filter = fsiv_create_sharpening_filter(filter_type, r1, r2);
     cv::Size new_size (in.cols+2*r2, in.rows+2*r2);
 
-    if(!only_luma){
-      cv::Mat img;
-      if(circular){
-          img = fsiv_extend_image(in,new_size,1);
-          cv::filter2D(img, out, -1, filter);
-          out = out(cv::Rect(r2,r2,in.cols,in.rows));
-      }
-
-      else{
-          img = fsiv_extend_image(in,new_size,0);
-          cv::filter2D(in, img, -1, filter);
-          out = img.clone();
-      }
-    }
     // Canal luma
-    else{
-        cv::Mat img = in.clone();
-        cv::cvtColor(img,img,cv::COLOR_BGR2HSV);
+    if(only_luma && in.channels() == 3){
+        cv::Mat hsv = in.clone();
+        cv::cvtColor(hsv,hsv,cv::COLOR_BGR2HSV);
         std::vector<cv::Mat> canales;
-        cv::split(img,canales);
+        cv::split(hsv,canales);
 
-        if(circular){
-            canales[2] = fsiv_extend_image(canales[2], new_size,1);
-            cv::filter2D(canales[2], canales[2], -1, filter);
-        }
-        else{
-            //canales[2] = fsiv_extend_image(canales[2], new_size, 0);
+        if(!circular){
+            //canales[2] = fsiv_extend_image(in,new_size,0);
         }
 
+        cv::filter2D(canales[2],canales[2],-1,filter);
         cv::merge(canales,out);
         cv::cvtColor(out,out,cv::COLOR_HSV2BGR);
+    }
+
+    else{
+      cv::Mat img, extended;
+      // Expansion circular
+      if(circular){
+          extended = fsiv_extend_image(in,new_size,1);
+          // Aplicamos la convolucion
+          cv::filter2D(extended, out, -1, filter);
+          out = out(cv::Rect(r2,r2,in.cols,in.rows));
+      }
+    // Expansion no circular
+      else{
+          extended = fsiv_extend_image(in,new_size,0);
+          // Convolucionamos la imagen
+          cv::filter2D(in, extended, -1, filter);
+          out = extended.clone();
+      }
+
+
     }
     //
     CV_Assert(out.type()==in.type());
