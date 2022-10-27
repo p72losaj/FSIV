@@ -1,5 +1,5 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
-PROJECT(sharpening)
+PROJECT(usm_enhance)
 ENABLE_LANGUAGE(CXX)
 
 set(CMAKE_CXX_STANDARD 11)
@@ -10,5 +10,6 @@ FIND_PACKAGE(OpenCV REQUIRED )
 LINK_LIBRARIES(${OpenCV_LIBS})
 include_directories ("${OpenCV_INCLUDE_DIRS}")
 
-add_executable(sharpen sharpen.cpp common_code.cpp common_code.hpp)
+add_executable(usm_enhance usm_enhance.cpp common_code.cpp common_code.hpp)
 add_executable(test_common_code test_common_code.cpp common_code.cpp common_code.hpp)
+ 
