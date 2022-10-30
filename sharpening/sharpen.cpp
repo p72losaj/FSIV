@@ -176,8 +176,8 @@ main (int argc, char* const* argv)
             }
 
             output = parametros.fuera;
-            cv::imwrite(output_name, output);
-            return retCode;
+          cv::imwrite(output_name, output);
+//            return retCode;
         }
 
         else{
@@ -207,7 +207,7 @@ main (int argc, char* const* argv)
       cv::Mat output = input.clone();
 
       //TODO
-
+        output = fsiv_image_sharpening(input, filter_type, luma,r1, r2,circular);
 
       //
 

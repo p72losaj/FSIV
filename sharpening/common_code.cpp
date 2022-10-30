@@ -1,37 +1,29 @@
+#include <iostream>
 #include "common_code.hpp"
-
-cv::Mat
-fsiv_create_box_filter(const int r)
-{
-    CV_Assert(r>0);
-    cv::Mat ret_v;
-    //TODO
-    float size = 2*r+1;
-    ret_v = cv::Mat::ones(size, size, CV_32F) / pow(size,2);
-    //
-    CV_Assert(ret_v.type()==CV_32FC1);
-    CV_Assert(ret_v.rows==(2*r+1) && ret_v.rows==ret_v.cols);
-    CV_Assert(std::abs(1.0-cv::sum(ret_v)[0])<1.0e-6);
-    return ret_v;
-}
+#include <opencv2/imgproc.hpp>
 
 cv::Mat
 fsiv_create_gaussian_filter(const int r)
 {
     CV_Assert(r>0);
     cv::Mat ret_v;
-    //TODO: Remenber 6*sigma is approx 99,73% of the distribution.
 
-    float size = 2*r+1;
-    float a = 1.0/(2.0*M_PI*pow(size/6.0,2));
-    ret_v = cv::Mat(size, size, CV_32FC1);
-    for (int i = 0; i < size; ++i) {
-        for (int j = 0; j < size; ++j) {
-            float b = -(pow(i-r,2)+pow(j-r,2))/(2.0*pow(size/6.0,2));
-            ret_v.at<float>(i, j) = a * exp(b);
-            }
+    //TODO: Remenber 6*sigma is approx 99,73% of the distribution.
+    ret_v = cv::Mat::zeros((2*r+1), (2*r+1), CV_32FC1);
+    float sigma = (2*r+1)/6.0;
+    float exp;
+    for(int i = -r; i <= r; i++){
+        for(int j = -r; j <= r; j++){
+            cv::Point point(r+i, r+j);
+            exp = (pow(i,2) + pow(j,2));
+            ret_v.at<float>(point) = std::exp(-(exp/(2*(pow(sigma, 2)))));
         }
-    ret_v /= (cv::sum(ret_v));
+    }
+
+    float accum = static_cast<float>(cv::sum(ret_v)[0]);
+    if(accum != 0)
+        ret_v/= accum;
+
 
     //
     CV_Assert(ret_v.type()==CV_32FC1);
@@ -41,152 +33,138 @@ fsiv_create_gaussian_filter(const int r)
 }
 
 cv::Mat
-fsiv_fill_expansion(cv::Mat const& in, const int r)
+fsiv_extend_image(const cv::Mat& img, const cv::Size& new_size, int ext_type)
 {
-    CV_Assert(!in.empty());
-    CV_Assert(r>0);
-    cv::Mat ret_v;
-    //TODO:
-    //Use of cv::copyMakeBorder is not allowed.
-    //Hint you don't need use any for sentence.
-
-    if(in.type() == CV_32FC1){
-        ret_v = cv::Mat::zeros(in.rows+2*r, in.cols+2*r, CV_32FC1);
-    }
-
-    else{ 
-        ret_v = cv::Mat::zeros(in.rows+2*r, in.cols+2*r, CV_8UC1);
-    }
-
-    cv::Rect rectangulo(r, r, in.cols, in.rows); // (x, y, width, height)
-    in.copyTo(ret_v(rectangulo)); // copia la imagen en el centro de la imagen de salida
-    //
-    CV_Assert(ret_v.type()==in.type());
-    CV_Assert(ret_v.rows == in.rows+2*r);
-    CV_Assert(ret_v.cols == in.cols+2*r);
-    return ret_v;
-}
-
-cv::Mat
-fsiv_circular_expansion(cv::Mat const& in, const int r)
-{
-    CV_Assert(!in.empty());
-    CV_Assert(r>0);
-    cv::Mat ret_v;
+    CV_Assert(img.rows<new_size.height);
+    CV_Assert(img.cols<new_size.width);
+    cv::Mat out;
     //TODO
-    //Use of cv::copyMakeBorder is not allowed.
-    //Hint you don't need use any "for" sentence, only 9 copyTo from "in"
-    // rois to "ret_v" rois.
+    //Hint: use cv::copyMakeBorder()
 
-    // Expansion de la imagen original
-    ret_v = fsiv_fill_expansion(in, r);    
-    // expansion superior e inferior
-    in(cv::Rect(0,0,in.cols,r)).copyTo(ret_v(cv::Rect(r, ret_v.rows-r, in.cols,r)));
-    in(cv::Rect(0,in.rows-r,in.cols,r)).copyTo(ret_v(cv::Rect(r, 0, in.cols,r)));
-    // expansion lateral
-    in(cv::Rect(0,0,r,in.rows)).copyTo(ret_v(cv::Rect(ret_v.cols-r,r,r,in.rows)));
-    in(cv::Rect(in.cols-r,0,r,in.rows)).copyTo(ret_v(cv::Rect(0,r,r,in.rows)));
-    // expansion en las esquinas
-    in(cv::Rect(0,0,r,r)).copyTo(ret_v(cv::Rect(ret_v.cols-r,ret_v.rows-r,r,r)));
-    in(cv::Rect(in.cols-r,in.rows-r,r,r)).copyTo(ret_v(cv::Rect(0,0,r,r)));
-    in(cv::Rect(in.cols-r,0,r,r)).copyTo(ret_v(cv::Rect(0,ret_v.rows-r,r,r)));
-    in(cv::Rect(0,in.rows-r,r,r)).copyTo(ret_v(cv::Rect(ret_v.cols-r,0,r,r)));
+    // new_size.height = img.rows + 2*r ->r = new_size.height-img.rows)/2
+    int r = (new_size.height-img.rows)/2;
 
-    //
-    CV_Assert(ret_v.type()==in.type());
-    CV_Assert(ret_v.rows == in.rows+2*r);
-    CV_Assert(ret_v.cols == in.cols+2*r);
-    CV_Assert(!(in.type()==CV_8UC1) || ret_v.at<uchar>(0,0)==in.at<uchar>(in.rows-r, in.cols-r));
-    CV_Assert(!(in.type()==CV_8UC1) || ret_v.at<uchar>(0,ret_v.cols/2)==in.at<uchar>(in.rows-r, in.cols/2));
-    CV_Assert(!(in.type()==CV_8UC1) || ret_v.at<uchar>(0,ret_v.cols-1)==in.at<uchar>(in.rows-r, r-1));
-    CV_Assert(!(in.type()==CV_8UC1) || ret_v.at<uchar>(ret_v.rows/2,0)==in.at<uchar>(in.rows/2, in.cols-r));
-    CV_Assert(!(in.type()==CV_8UC1) || ret_v.at<uchar>(ret_v.rows/2,ret_v.cols/2)==in.at<uchar>(in.rows/2, in.cols/2));
-    CV_Assert(!(in.type()==CV_8UC1) || ret_v.at<uchar>(ret_v.rows-1,0)==in.at<uchar>(r-1, in.cols-r));
-    CV_Assert(!(in.type()==CV_8UC1) || ret_v.at<uchar>(ret_v.rows-1,ret_v.cols/2)==in.at<uchar>(r-1, in.cols/2));
-    CV_Assert(!(in.type()==CV_8UC1) || ret_v.at<uchar>(ret_v.rows-1,ret_v.cols-1)==in.at<uchar>(r-1, r-1));
-    return ret_v;
-}
-
-cv::Mat
-fsiv_filter2D(cv::Mat const& in, cv::Mat const& filter)
-{
-    CV_Assert(!in.empty() && !filter.empty());
-    CV_Assert(in.type()==CV_32FC1 && filter.type()==CV_32FC1);
-    cv::Mat ret_v;
-    //TODO
-ret_v = cv::Mat::zeros((in.rows-2*(filter.rows/2)), (in.cols-2*(filter.cols/2)), CV_32FC1);
-    // Aplicamos el fliltro 2D a la nueva imagen
-    for (int i = 0; i < ret_v.rows; ++i) {
-        for (int j = 0; j < ret_v.cols; ++j){
-            ret_v.at<float>(i,j) = sum(filter.mul(in(cv::Rect(j, i, filter.cols, filter.rows)))).val[0];
-        }
+    if(ext_type == 0){
+         cv::copyMakeBorder(img,out,r,r,r,r,cv::BORDER_CONSTANT);
     }
-    //
-    CV_Assert(ret_v.type()==CV_32FC1);
-    CV_Assert(ret_v.rows==in.rows-2*(filter.rows/2));
-    CV_Assert(ret_v.cols==in.cols-2*(filter.cols/2));
-    return ret_v;
-}
 
-cv::Mat
-fsiv_combine_images(const cv::Mat src1, const cv::Mat src2,
-                    double a, double b)
-{
-    CV_Assert(src1.type()==src2.type());
-    CV_Assert(src1.rows==src2.rows);
-    CV_Assert(src1.cols==src2.cols);
-    cv::Mat ret_v;
-    //TODO
-  ret_v = src1.mul(a) + src2.mul(b);
-
-    //
-    CV_Assert(ret_v.type()==src2.type());
-    CV_Assert(ret_v.rows==src2.rows);
-    CV_Assert(ret_v.cols==src2.cols);
-    return ret_v;
-}
-
-cv::Mat
-fsiv_usm_enhance(cv::Mat  const& in, double g, int r,
-                 int filter_type, bool circular, cv::Mat *unsharp_mask)
-{
-    CV_Assert(!in.empty());
-    CV_Assert(in.type()==CV_32FC1);
-    CV_Assert(r>0);
-    CV_Assert(filter_type>=0 && filter_type<=1);
-    CV_Assert(g>=0.0);
-    cv::Mat ret_v;
-    //TODO
-    //Hint: use your own functions fsiv_xxxx
-
-cv::Mat filtro, expansion;
-    // Aplicamos los filtros
-    if(filter_type == 0){
-        filtro = fsiv_create_box_filter(r);
-    }
-    else{ 
-        filtro = fsiv_create_gaussian_filter(r);
-    }
-    // Expansion de la imagen
-    if(!circular){
-        expansion = fsiv_fill_expansion(in, r);
-    }
     else{
-        expansion = fsiv_circular_expansion(in, r);
+        cv::copyMakeBorder(img,out,r,r,r,r,cv::BORDER_WRAP);
     }
-    // Aplicamos el filtro 2D
-    cv::Mat filtro2D = fsiv_filter2D(expansion, filtro);
-
-    // unsharp  mask
-    if(unsharp_mask){
-        *unsharp_mask = filtro2D;
-    }
-    // Aplicamos la combinacion de imagenes
-    ret_v = fsiv_combine_images(in, filtro2D, 1+g, -g);
 
     //
-    CV_Assert(ret_v.rows==in.rows);
-    CV_Assert(ret_v.cols==in.cols);
-    CV_Assert(ret_v.type()==CV_32FC1);
-    return ret_v;
+    CV_Assert(out.type()==img.type());
+    CV_Assert(out.rows == new_size.height);
+    CV_Assert(out.cols == new_size.width);
+    return out;
+}
+
+cv::Mat
+fsiv_create_sharpening_filter(const int filter_type, int r1, int r2)
+{
+    CV_Assert(0<=filter_type && filter_type<=2);
+    CV_Assert(0<r1 && r1<r2);
+    cv::Mat filter;
+    //TODO
+    //Remenber DoG = G[r2]-G[r1].
+    //Hint: use fsiv_extend_image() to extent G[r1].
+    filter = cv::Mat::zeros(3, 3, CV_32FC1);
+    if(filter_type==0){
+          filter.at<float>(0,1) = -1;
+          filter.at<float>(1,0) = -1;
+          filter.at<float>(1,1) = 5;
+          filter.at<float>(1,2) = -1;
+          filter.at<float>(2,1) = -1;
+      }
+
+
+    // Filtro laplaciano en lap8
+
+    else if(filter_type==1){
+        filter.at<float>(0,0) = -1;
+        filter.at<float>(0,1) = -1;
+        filter.at<float>(0,2) = -1;
+        filter.at<float>(1,0) = -1;
+        filter.at<float>(1,1) = 9;
+        filter.at<float>(1,2) = -1;
+        filter.at<float>(2,0) = -1;
+        filter.at<float>(2,1) = -1;
+        filter.at<float>(2,2) = -1;
+      }
+    // Filtro laplaciano DOG
+
+    else{
+            cv::Mat g1 = fsiv_create_gaussian_filter(r1);
+            cv::Mat g2 = fsiv_create_gaussian_filter(r2);
+            g1 = fsiv_extend_image(g1, g2.size(),0);
+            filter = g1-g2;
+            filter.at<float>(g2.rows/2, g2.cols/2) += 1;
+        }
+
+
+    //
+    CV_Assert(filter.type()==CV_32FC1);
+    CV_Assert((filter_type == 2) || (filter.rows==3 && filter.cols==3) );
+    CV_Assert((filter_type != 2) || (filter.rows==(2*r2+1) &&
+                                     filter.cols==(2*r2+1)));
+    return filter;
+}
+
+
+
+cv::Mat
+fsiv_image_sharpening(const cv::Mat& in, int filter_type, bool only_luma,
+                      int r1, int r2, bool circular)
+{
+    CV_Assert(in.depth()==CV_8U);
+    CV_Assert(0<r1 && r1<r2);
+    CV_Assert(0<=filter_type && filter_type<=2);
+    cv::Mat out;
+    //TODO
+    //Hint: use cv::filter2D.
+    //Remenber: if circular, first the input image must be circular extended,
+    //  and then clip the result.
+
+    // Creamos el filtro
+    cv::Mat filter = fsiv_create_sharpening_filter(filter_type, r1, r2);
+    cv::Size new_size (in.cols+2*r2, in.rows+2*r2);
+
+    // Canal luma
+    if(only_luma && in.channels() == 3){
+        cv::Mat hsv = in.clone();
+        cv::cvtColor(hsv,hsv,cv::COLOR_BGR2HSV);
+        std::vector<cv::Mat> canales;
+        cv::split(hsv,canales);
+
+        if(!circular){
+            //canales[2] = fsiv_extend_image(in,new_size,0);
+        }
+
+        cv::filter2D(canales[2],canales[2],-1,filter);
+        cv::merge(canales,out);
+        cv::cvtColor(out,out,cv::COLOR_HSV2BGR);
+    }
+
+    else{
+      cv::Mat img, extended;
+      // Expansion circular
+      if(circular){
+          extended = fsiv_extend_image(in,new_size,1);
+          // Aplicamos la convolucion
+          cv::filter2D(extended, out, -1, filter);
+          out = out(cv::Rect(r2,r2,in.cols,in.rows));
+      }
+    // Expansion no circular
+      else{
+          // Convolucionamos la imagen
+          cv::filter2D(in, out, -1, filter);
+
+      }
+
+
+    }
+    //
+    CV_Assert(out.type()==in.type());
+    CV_Assert(out.size()==in.size());
+    return out;
 }
