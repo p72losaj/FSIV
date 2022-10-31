@@ -13,6 +13,7 @@ Formas de ejecución
 ./sharpen ../data/radiografia.png radiografia_output.png -r1=20 -r2=50 
 ./sharpen ../data/radiografia.png radiografia_output.png -r1=40 -r2=50 -f=0
 ./sharpen ../data/radiografia.png radiografia_output.png -r1=40 -r2=50 -f=1 -c
+./sharpen ../data/radiografia.png radiografia_output.png -r1=40 -r2=50 -f=2
 ./sharpen ../data/radiografia.png radiografia_output.png -i
 
 ./sharpen ../data/ciclista_original.jpg ciclista_output.jpg  

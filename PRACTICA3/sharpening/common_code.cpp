@@ -9,6 +9,7 @@ fsiv_create_gaussian_filter(const int r)
     cv::Mat ret_v;
 
     //TODO: Remenber 6*sigma is approx 99,73% of the distribution.
+
     ret_v = cv::Mat::zeros((2*r+1), (2*r+1), CV_32FC1);
     float sigma = (2*r+1)/6.0;
     float exp;
@@ -23,7 +24,6 @@ fsiv_create_gaussian_filter(const int r)
     float accum = static_cast<float>(cv::sum(ret_v)[0]);
     if(accum != 0)
         ret_v/= accum;
-
 
     //
     CV_Assert(ret_v.type()==CV_32FC1);
@@ -40,9 +40,7 @@ fsiv_extend_image(const cv::Mat& img, const cv::Size& new_size, int ext_type)
     cv::Mat out;
     //TODO
     //Hint: use cv::copyMakeBorder()
-
-    // new_size.height = img.rows + 2*r ->r = new_size.height-img.rows)/2
-    int r = (new_size.height-img.rows)/2;
+        int r = (new_size.height-img.rows)/2;
 
     if(ext_type == 0){
          cv::copyMakeBorder(img,out,r,r,r,r,cv::BORDER_CONSTANT);
@@ -51,7 +49,6 @@ fsiv_extend_image(const cv::Mat& img, const cv::Size& new_size, int ext_type)
     else{
         cv::copyMakeBorder(img,out,r,r,r,r,cv::BORDER_WRAP);
     }
-
     //
     CV_Assert(out.type()==img.type());
     CV_Assert(out.rows == new_size.height);
@@ -68,7 +65,7 @@ fsiv_create_sharpening_filter(const int filter_type, int r1, int r2)
     //TODO
     //Remenber DoG = G[r2]-G[r1].
     //Hint: use fsiv_extend_image() to extent G[r1].
-    filter = cv::Mat::zeros(3, 3, CV_32FC1);
+        filter = cv::Mat::zeros(3, 3, CV_32FC1);
     if(filter_type==0){
           filter.at<float>(0,1) = -1;
           filter.at<float>(1,0) = -1;
@@ -124,45 +121,51 @@ fsiv_image_sharpening(const cv::Mat& in, int filter_type, bool only_luma,
     //Hint: use cv::filter2D.
     //Remenber: if circular, first the input image must be circular extended,
     //  and then clip the result.
-
+    
     // Creamos el filtro
+    
     cv::Mat filter = fsiv_create_sharpening_filter(filter_type, r1, r2);
-    cv::Size new_size (in.cols+2*r2, in.rows+2*r2);
+    cv::Size new_size (in.cols+(2*r2), in.rows+(2*r2));
 
-    // Canal luma
+    // Aplicar el filtro sharpening solo al canal luma 
+    
     if(only_luma && in.channels() == 3){
         cv::Mat hsv = in.clone();
-        cv::cvtColor(hsv,hsv,cv::COLOR_BGR2HSV);
         std::vector<cv::Mat> canales;
-        cv::split(hsv,canales);
-
-        if(!circular){
-            //canales[2] = fsiv_extend_image(in,new_size,0);
+        cv::cvtColor(hsv, hsv, cv::COLOR_BGR2HSV);
+        cv::split(hsv, canales);
+        // Procesamos el canal V
+        if(circular){
+            cv::Mat circ = fsiv_extend_image(canales[2], new_size, 1);
+            cv::filter2D(circ, circ, -1, filter);
+            circ = circ(cv::Rect(r2, r2, in.cols, in.rows));
+            circ.copyTo(canales[2]);
         }
-
-        cv::filter2D(canales[2],canales[2],-1,filter);
-        cv::merge(canales,out);
-        cv::cvtColor(out,out,cv::COLOR_HSV2BGR);
+        else{
+            // Expansion de la imagen rellenando con 1 
+            cv::Mat ext = fsiv_extend_image(canales[2], new_size, 0);
+            cv::filter2D(ext, ext, -1, filter);
+            ext = ext(cv::Rect(r2, r2, in.cols, in.rows));
+            ext.copyTo(canales[2]);
+        }
+        cv::merge(canales, hsv);
+        cv::cvtColor(hsv, out, cv::COLOR_HSV2BGR);
     }
 
     else{
-      cv::Mat img, extended;
-      // Expansion circular
-      if(circular){
-          extended = fsiv_extend_image(in,new_size,1);
-          // Aplicamos la convolucion
-          cv::filter2D(extended, out, -1, filter);
-          out = out(cv::Rect(r2,r2,in.cols,in.rows));
-      }
-    // Expansion no circular
-      else{
-          // Convolucionamos la imagen
-          cv::filter2D(in, out, -1, filter);
-
-      }
-
-
+        cv::Mat img, extended;
+        // Extension circular rellando con 1
+        if(circular){
+            extended = fsiv_extend_image(in,new_size,1);
+        }
+        else{
+            extended = fsiv_extend_image(in,new_size,0);
+        }
+        cv::filter2D(extended, out, -1, filter);
+        out = out(cv::Rect(r2,r2,in.cols,in.rows));
     }
+
+
     //
     CV_Assert(out.type()==in.type());
     CV_Assert(out.size()==in.size());
