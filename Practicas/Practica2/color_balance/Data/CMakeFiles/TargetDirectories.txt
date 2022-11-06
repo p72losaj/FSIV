@@ -1,0 +1,4 @@
+/home/jaime/Escritorio/LOCAL/FSIV/PRACTICA2/color_balance/Data/CMakeFiles/edit_cache.dir
+/home/jaime/Escritorio/LOCAL/FSIV/PRACTICA2/color_balance/Data/CMakeFiles/test_common_code.dir
+/home/jaime/Escritorio/LOCAL/FSIV/PRACTICA2/color_balance/Data/CMakeFiles/rebuild_cache.dir
+/home/jaime/Escritorio/LOCAL/FSIV/PRACTICA2/color_balance/Data/CMakeFiles/color_balance.dir

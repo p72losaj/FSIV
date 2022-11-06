@@ -1,0 +1,77 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.1"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "calibrate",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "calibrate::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-calibrate-Debug-2dcbb8d369e93f3ea6c4.json",
+					"name" : "calibrate",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "test_common_code::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-test_common_code-Debug-83695c3b3384e03cfac0.json",
+					"name" : "test_common_code",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "undistort::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-undistort-Debug-c79279fbc128b0b7de3b.json",
+					"name" : "undistort",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/jaime/Escritorio/LOCAL/FSIV/Practica4/ejercicio1",
+		"source" : "/home/jaime/Escritorio/LOCAL/FSIV/Practica4/ejercicio1/calibrate"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 0
+	}
+}

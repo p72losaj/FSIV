@@ -1,0 +1,17 @@
+PARTES QUE HE REALIZADO DE LA PRACTICA:
+
+-TODO
++Tests
++Funciones del main
++Modo interactivo incluyendo click para nuevo blanco
+
+Formas de ejecución
+
+./color_balance ../Data/manos_sin_balance1.jpg ../data/output.png 
+./color_balance ../Data/manos_sin_balance1.jpg ../data/output.png -p=0
+./color_balance ../Data/manos_sin_balance1.jpg ../data/output.png -p=30
+./color_balance ../Data/manos_sin_balance1.jpg ../data/output.png -p=90
+./color_balance ../Data/manos_sin_balance1.jpg ../data/output.png -p=100
+./color_balance ../Data/manos_sin_balance1.jpg ../data/output.png -i
+
+Para esta ultima se puede elegir el percentil con el trackbar y con un click en el input seleccionar nuevo blanco. Los dos percentiles extremos representan el whitepatch (0) y grayworld (100).
