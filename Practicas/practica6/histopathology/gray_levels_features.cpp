@@ -12,7 +12,7 @@ GrayLevelsFeatures::GrayLevelsFeatures()
     //TODO:: Set the default values to the params vector.
     type_ = FSIV_GREY_LEVELS;
     params_.resize(1);
-    params_[0]=16.0; //Default resized image is 16x16
+    params_[0]=16.0; //Default resized image is 16x16    
     //
 }
 

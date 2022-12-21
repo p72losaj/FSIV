@@ -55,7 +55,7 @@ fsiv_create_rtrees_classifier(int V,
     //    where T is the max iterations and E is the epsilon.
     rtrees = cv::ml::RTrees::create();
     rtrees->setActiveVarCount(V);
-    rtrees->setTermCriteria(cvTermCriteria(cv::TermCriteria::MAX_ITER + cv::TermCriteria::EPS, T, E));
+    rtrees->setTermCriteria(cv::TermCriteria(cv::TermCriteria::MAX_ITER + cv::TermCriteria::EPS, T, E));
     //
     CV_Assert(rtrees != nullptr);
     return rtrees;
@@ -68,10 +68,10 @@ void fsiv_train_classifier(cv::Ptr<cv::ml::StatModel> &clsf,
     CV_Assert(clsf != nullptr);
 
     // TODO: train the classifier.
-    // Hint: you can use cv::ml::TrainData to set the parameters.
+    // Hint: you can use v::ml::TrainData to set the parameters.
     // Remenber: we are using ROW_SAMPLE ordering in the dataset.
-        cv::Ptr<cv::ml::TrainData> data =  cv::ml::TrainData::create(samples,cv::ml::ROW_SAMPLE, labels);
-        clsf->train(data);
+    cv::Ptr<cv::ml::TrainData> data =  cv::ml::TrainData::create(samples,cv::ml::ROW_SAMPLE, labels);
+    clsf->train(cv::ml::TrainData::create(samples,cv::ml::ROW_SAMPLE, labels));
     //
     CV_Assert(clsf->isTrained());
 }
@@ -83,8 +83,8 @@ void fsiv_make_predictions(cv::Ptr<cv::ml::StatModel> &clsf,
     CV_Assert(clsf->isTrained());
     // TODO: do the predictions.
     // Remenber: the classefied used float to save the labels.
-        predictions = clsf->predict(samples);
-
+    clsf->predict(samples, predictions);
+    predictions.convertTo(predictions, CV_32S);
     //
     CV_Assert(predictions.depth() == CV_32S);
     CV_Assert(predictions.rows == samples.rows);

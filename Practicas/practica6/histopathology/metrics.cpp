@@ -17,7 +17,18 @@ fsiv_compute_confusion_matrix(const cv::Mat &true_labels,
 
     //TODO: Compute the confussion matrix.
     //Remenber: Rows are the Ground Truth. Cols are the predictions.
-
+    
+    for(int i = 0; i < true_labels.rows; i++){
+        int row = true_labels.at<int>(i);
+        if(row < 0){
+            row = 0;
+        }
+        int col = predicted_labels.at<int>(i);
+        if(col < 0){
+            col = 0;
+        }
+        cmat.at<float>(row, col) += 1;
+    }
 
     //
     CV_Assert(std::abs(cv::sum(cmat)[0] - static_cast<double>(true_labels.rows)) <=
@@ -38,6 +49,14 @@ fsiv_compute_recognition_rates(const cv::Mat &cmat)
 
         //TODO: compute the recognition rate (RR) for the category.
         //Avoid zero divisions!!.
+        //  to the total of samples of the category.
+        float total = 0;
+        for(int i = 0; i < cmat.rows; i++){
+            total += cmat.at<float>(category, i);
+        }
+        if(total != 0){
+            RR[category] = cmat.at<float>(category, category) / total;
+        }
 
         //
         CV_Assert(RR[category] >= 0.0f && RR[category] <= 1.0f);
@@ -56,7 +75,23 @@ float fsiv_compute_accuracy(const cv::Mat &cmat)
     //Hint: the accuracy is the rate of correct classifications
     //  to the total.
     //Remenber: avoid zero divisions!!.
-
+    // total = np.sum(cmat)
+    float total = 0;
+    for(int i = 0; i < cmat.rows; i++){
+        for(int j = 0; j < cmat.cols; j++){
+            total += cmat.at<float>(i, j);
+        }
+    }
+    // if total > 0.0
+    if(total > 0.0){
+        // diag = np.sum(np.diag(cmat))
+        float diag = 0;
+        for(int i = 0; i < cmat.rows; i++){
+            diag += cmat.at<float>(i, i);
+        }
+        // acc = diag / total
+        acc = diag / total;
+    }
     //
     CV_Assert(acc >= 0.0f && acc <= 1.0f);
     return acc;
@@ -67,7 +102,17 @@ float fsiv_compute_mean_recognition_rate(const std::vector<float> &rr)
     float m_rr = 0.0;
     //TODO
     //Remenber: the MRR is the mean value of the recognition rates.
-
+    // total = np.sum(rr)
+    float total = 0;
+    for(int i = 0; i < rr.size(); i++){
+        total += rr[i];
+    }
+    // if total > 0.0
+    if(total > 0.0){
+        // m_rr = total / len(rr)
+        m_rr = total / rr.size();
+    }
+    
     //
     return m_rr;
 }
@@ -93,4 +138,6 @@ void print_model_metrics(const cv::Mat &gt_labels,
     out << std::endl;
     out << "Mean recognition rate: " << m_rr << std::endl;
     out << "Accuracy: " << acc << std::endl;
+    
+
 }

@@ -48,6 +48,9 @@ int main(int argc, char *const *argv)
         /*Ahora toca que tu rellenes con lo que hay que hacer ...*/
         Dataset dataset;
         int ret_code = dataset.load(dataset_file);
+        // Ejemplo de comando para cargar el dataset
+        // int ret_code = dataset.load("dataset.txt");
+        
         if (ret_code != 0)
         {
             std::cerr << "Error: could not load dataset. Return code is "
