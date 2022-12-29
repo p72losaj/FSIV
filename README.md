@@ -24,8 +24,11 @@ cv::Mat convert_gray_to_rgb(const cv::Mat& img)
  
  cv::Mat convert_rgb_to_gray(const cv::Mat& img)
 {
+    
     cv::Mat out;
+    
     cv::cvtColor(img,out,cv::COLOR_BGR2GRAY);
+    
     return out;
 }
 
