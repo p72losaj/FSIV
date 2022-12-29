@@ -11,12 +11,11 @@ Directorio de la asignatura de Fundamentos de Sistemas en Vision
 
 cv::Mat convert_gray_to_rgb(const cv::Mat& img)
 {
+     
+    cv::Mat out;
+    cv::cvtColor(img,out,cv::COLOR_GRAY2BGR);  
+    return out;
   
-  cv::Mat out;
-  
-  cv::cvtColor(img,out,cv::COLOR_GRAY2BGR);
-  
-  return out;
 }
 
 /**
