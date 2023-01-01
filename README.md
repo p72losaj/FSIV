@@ -785,15 +785,15 @@ cv::Mat fsiv_usm_enhance(cv::Mat  const& in, double g, int r, int filter_type, b
  cv::Mat fsiv_image_sharpening(const cv::Mat& in, int filter_type, bool only_luma, int r1, int r2, bool circular)
 {
     
-    //Hint: use cv::filter2D.
-    //Remenber: if circular, first the input image must be circular extended, and then clip the result.
-    cv::Mat out;
+     //Hint: use cv::filter2D.
+     //Remenber: if circular, first the input image must be circular extended, and then clip the result.
+     cv::Mat out;
     
-    cv::Mat filter = fsiv_create_sharpening_filter(filter_type, r1, r2); // Crear el filtro
+     cv::Mat filter = fsiv_create_sharpening_filter(filter_type, r1, r2); // Crear el filtro
 
-    cv::Size new_size (in.cols+(2*r2), in.rows+(2*r2)); // Tamaño de la imagen extendida
+     cv::Size new_size (in.cols+(2*r2), in.rows+(2*r2)); // Tamaño de la imagen extendida
     
-    if(only_luma && in.channels() == 3){ // Canal luma
+     if(only_luma && in.channels() == 3){ // Canal luma
         cv::Mat hsv = in.clone();
         std::vector<cv::Mat> canales;
         cv::cvtColor(hsv, hsv, cv::COLOR_BGR2HSV); // Convertir a HSV
@@ -826,4 +826,284 @@ cv::Mat fsiv_usm_enhance(cv::Mat  const& in, double g, int r, int filter_type, b
 
     return out;
 }
+
+# undishort
+
+/**
+ * @brief Generate a 3d point vector with the inner corners of a calibration board.
+ * @param board_size is the inner points board geometry (cols x rows).
+ * @param square_size is the size of the squares.
+ * @return a vector of 3d points with the corners.
+ * @post ret_v.size()==(cols*rows)
+ */
+ 
+std::vector<cv::Point3f> fsiv_generate_3d_calibration_points(const cv::Size& board_size, float square_size)
+{
+ 
+    std::vector<cv::Point3f> ret_v;
+    //Remenber: the first inner point has (1,1) in board coordinates.
+    for(int i=1; i <= board_size.height; i++){
+        for(int j=1; j<= board_size.width; j++){
+            ret_v.push_back(cv::Point3f(j*square_size,i*square_size, 0)); // puntos de calibracion 3D
+        }
+    }
+    return ret_v;
+}
+
+/**
+ * @brief Find a calibration chessboard and compute the refined coordinates of the inner corners.
+ * @param img is the image where finding out.
+ * @param board_size is the inners board points geometry.
+ * @param[out] corner_points save the refined corner coordinates if the board was found.
+ * @param wname is its not nullptr, it is the window's name use to show the detected corners.
+ * @return true if the board was found.
+ * @pre img.type()==CV_8UC3
+ * @warning A keyboard press is waited when the image is shown to continue.
+ */
+ 
+ bool fsiv_find_chessboard_corners(const cv::Mat& img, const cv::Size &board_size,std::vector<cv::Point2f>& corner_points,const char * wname)
+{
+    
+    bool was_found = cv::findChessboardCorners(img,board_size,corner_points); // Buscamos las esquinas del tablero
+
+    if(was_found){ // Esquinas encontradas
+        cv::Mat grey = img.clone(); // Clonamos la imagen
+        cv::cvtColor(grey, grey, cv::COLOR_BGR2GRAY); // Convertimos la imagen a escala de grises
+        // Mejoramos la localizacion de las esquinas
+        cv::cornerSubPix(grey, corner_points, cv::Size(5, 5), cv::Size(-1, -1), cv::TermCriteria()); 
+    }
+    
+    if(wname){ // Fichero de salida
+        cv::drawChessboardCorners(img, board_size, corner_points, was_found); // Dibujamos las esquinas del tablero
+        cv::imshow(wname, img); // Mostramos la imagen
+    }
+
+    return was_found;
+}
+
+/**
+ * @brief Calibrate a camara given the a sequence of 3D points and its correspondences in the plane image.
+ * @param[in] _2d_points are the sequence of 2d corners detected per view.
+ * @param[in] _3d_points are the corresponding 3d points per view.
+ * @param[in] camera_size is the camera geometry in pixels.
+ * @param[out] camera_matrix is the calibrated camera matrix.
+ * @param[out] dist_coeffs is the calibrated distortion coefficients.
+ * @param[out] rvects is not null, it will save the rotation matrix of each view.
+ * @param[out] tvects is not null, it will save the translation vector of each view.
+ * @return the reprojection error of the calibration.
+ */
+ 
+ float fsiv_calibrate_camera(const std::vector<std::vector<cv::Point2f>>& _2d_points,
+                      const std::vector<std::vector<cv::Point3f>>& _3d_points, const cv::Size &camera_size,
+                      cv::Mat& camera_matrix,cv::Mat& dist_coeffs,std::vector<cv::Mat>* rvecs,std::vector<cv::Mat>* tvecs)
+{
+
+    float error=0.0;
+    std::vector<cv::Mat> rvecs_, tvecs_;
+    // Si los vectores de rotacion y traslacion no son nulos -> Obtenemos el error al calibrar la imagen
+    if( (rvecs != nullptr) && (tvecs != nullptr))
+        error = cv::calibrateCamera(_3d_points, _2d_points, camera_size, camera_matrix, dist_coeffs, *rvecs, *tvecs);
+    
+    // Si los vectores de rotacion y traslacion son nulos -> Obtenemos el error al calibrar la imagen
+    else
+        error = cv::calibrateCamera(_3d_points, _2d_points, camera_size, camera_matrix, dist_coeffs, rvecs_, tvecs_);
+
+    return error;
+}
+
+
+/**
+ * @brief Project the 3D Camera Coordinate system on the image.
+ * The X axis will be draw in red, the Y axis in green and the Z axis in blue.
+ * @param[in,out] img the image where projecting the axes. 
+ * @param[in] camera_matrix is the camera matrix.
+ * @param[in] dist_coeffs are the distortion coefficients.
+ * @param[in] rvec is the rotation vector.
+ * @param[in] tvec is the translation vector.
+ * @param[in] size is the length in word coordinates of each axis.
+ * @param[in] line_width used to draw the axis.
+ */
+void fsiv_draw_axes(cv::Mat& img, const cv::Mat& camera_matrix, const cv::Mat& dist_coeffs,
+               const cv::Mat& rvec, const cv::Mat& tvec,const float size, const int line_width)
+{
+    
+    std::vector<cv::Point3f> points3d;
+    std::vector<cv::Point2f> points2d;
+    // Obtenemos los puntos 3D
+    cv::Point3f p0(0, 0, 0), p1(size, 0, 0), p2(0, size, 0), p3(0, 0, -size);
+    points3d.push_back(p0);
+    points3d.push_back(p1);
+    points3d.push_back(p2);
+    points3d.push_back(p3);
+    cv::projectPoints(points3d, rvec, tvec, camera_matrix, dist_coeffs, points2d); // Realizamos la proyección de los puntos 3D
+    // Obtenemos la linea de puntos 2D
+    cv::line(img, points2d[0], points2d[1], cv::Scalar(0, 0, 255), line_width);
+    cv::line(img, points2d[0], points2d[2], cv::Scalar(0, 255, 0), line_width);
+    cv::line(img, points2d[0], points2d[3], cv::Scalar(255, 0, 0), line_width);
+}
+
+
+/**
+ * @brief Save the calibration parameters in a file.
+ * The labels to save are:
+ *
+ * image-width (int)
+ * image-height (int)
+ * error (float/double)
+ * camera-matrix (Matrix 3x3 CV_64F)
+ * distortion-coefficients (Matrix 1x5 CV_64F)
+ * rvec (Matrix 3x1 CV_64F)
+ * tvec (Matrix 3x1 CV_64F)
+ *
+ * @param[in|out] fs is a file storage object to write the data.
+ * @param[in] camera_size is the camera geometry in pixels.
+ * @param[in] error is the calibration error.
+ * @param[in] camera_matrix is the camera matrix.
+ * @param[in] dist_coeffs are the distortion coefficients.
+ * @param[in] rvec is the rotation vector.
+ * @param[in] tvec is the translation vector.
+ * @pre fs.isOpened()
+ * @post fs.isOpened()
+ */
+ 
+ void fsiv_save_calibration_parameters(cv::FileStorage& fs,
+                                const cv::Size & camera_size,float error,const cv::Mat& camera_matrix,
+                                const cv::Mat& dist_coeffs,const cv::Mat& rvec,const cv::Mat& tvec)
+{
+    
+    fs.write("image-width", camera_size.width);
+    fs.write("image-height", camera_size.height);
+    fs.write("error", error);
+    fs.write("camera-matrix", camera_matrix);
+    fs.write("distortion-coefficients", dist_coeffs);
+    fs.write("rvec", rvec);
+    fs.write("tvec", tvec);
+    return;
+}
+
+
+/**
+ * @brief Compute the pose of a camara giving a view of the board.
+ * @param[in] _3dpoints are the WCS 3D points of the board.
+ * @param[in] _2dpoints are the refined corners detected.
+ * @param[in] camera_matrix is the camera matrix.
+ * @param[in] dist_coeffs are the distortion coefficients.
+ * @param[out] rvec is the computed rotation vector.
+ * @param[out] tvec is the computed translation vector.
+ */
+
+void fsiv_compute_camera_pose(const std::vector<cv::Point3f> &_3dpoints,const std::vector<cv::Point2f> &_2dpoints,
+                              const cv::Mat& camera_matrix,const cv::Mat& dist_coeffs,cv::Mat& rvec,cv::Mat& tvec)
+{
+
+    cv::solvePnP(_3dpoints, _2dpoints, camera_matrix, dist_coeffs, rvec, tvec);
+}
+
+/**
+ * @brief Load the calibration parameters from a file.
+ * The file will have the following labels:
+ *
+ * image-width (int)
+ * image-height (int)
+ * error (float/double)
+ * camera-matrix (Matrix 3x3 CV_64F)
+ * distortion-coefficients (Matrix 1x5 CV_64F)
+ * rvec (Matrix 3x1 CV_64F)
+ * tvec (Matrix 3x1 CV_64F)
+ *
+ * @param[in|out] fs is a file storage object to write the data.
+ * @param[out] camera_size is the camera geometry in pixels.
+ * @param[out] error is the calibration error.
+ * @param[out] camera_matrix is the camera matrix.
+ * @param[out] dist_coeffs are the distortion coefficients.
+ * @param[out] rvec is the rotation vector.
+ * @param[out] tvec is the translation vector.
+ * @pre fs.isOpened()
+ * @post fs.isOpened()
+ */
+
+void fsiv_load_calibration_parameters(cv::FileStorage &fs,cv::Size &camera_size,
+                                 float& error,cv::Mat& camera_matrix,cv::Mat& dist_coeffs,cv::Mat& rvec,cv::Mat& tvec)
+{
+    
+    fs["image-width"] >> camera_size.width;
+    fs["image-height"] >> camera_size.height;
+    fs["error"] >> error;
+    fs["camera-matrix"] >> camera_matrix;
+    fs["distortion-coefficients"] >> dist_coeffs;
+    fs["rvec"] >> rvec;
+    fs["tvec"] >> tvec;
+    return;
+}
+
+/**
+ * @brief Correct the len's distorntions of an image.
+ * @param[in] input the distorted image.
+ * @param[out] output the corrected image.
+ * @param[in] camera_matrix is the camera matrix.
+ * @param[in] dist_coeffs are the distortion coefficients.
+ */
+
+void fsiv_undistort_image(const cv::Mat& input, cv::Mat& output,const cv::Mat& camera_matrix,const cv::Mat& dist_coeffs)
+{
+    
+    //Hint: use cv::undistort.
+    cv::undistort(input, output, camera_matrix, dist_coeffs);   
+}
+
+/**
+ * @brief Correct the len's distortions from a input video stream.
+ * @param[in|out] input is the input distorted video stream.
+ * @param[out] output is the corrected output video stream.
+ * @param[in] camera_matrix is the camera matrix.
+ * @param[in] dist_coeffs are the distortion coefficients.
+ * @param[in] interp specifies the interpolation method to use.
+ * @param[in] input_wname if it is not nullptr, show input frames.
+ * @param[in] output_wname if it is not nullptr, show ouput frames.
+ * @param[in] fps is the frame per seconds to wait between frames (when frames are shown). Value 0 means dont wait.
+ * @pre input.isOpened()
+ * @pre output.isOpened()
+ * @post input.isOpened()
+ * @post output.isOpened()
+ */
+
+void fsiv_undistort_video_stream(cv::VideoCapture&input_stream,cv::VideoWriter& output_stream,const cv::Mat& camera_matrix,
+                            const cv::Mat& dist_coeffs,const int interp,const char * input_wname,const char * output_wname,
+                            double fps)
+{
+
+    //Hint: to speed up, first compute the transformation maps 
+    // (one time only at the beginning using cv::initUndistortRectifyMap)
+    // and then only remap (cv::remap) the input frame with the computed maps.
+    
+    cv::Mat frame_in, frame_out, map1, map2;
+
+    double retard = 1000/fps; // Retardo 
+    
+    // Obtenemos el tamaño de la imagen
+    cv::Size size = cv::Size(input_stream.get(cv::CAP_PROP_FRAME_WIDTH), input_stream.get(cv::CAP_PROP_FRAME_HEIGHT));
+    
+    // Obtenemos la matriz de transformación    
+    cv::initUndistortRectifyMap(camera_matrix, dist_coeffs, cv::Mat(), camera_matrix, size, CV_32FC1, map1, map2);
+    
+    input_stream >> frame_in; // Obtenemos la primera imagen
+    
+
+    while(!frame_in.empty()){
+
+        cv::remap(frame_in, frame_out, map1, map2, interp);
+
+        output_stream.write(frame_out);
+
+        cv::imshow(input_wname, frame_in); 
+            
+        cv::imshow(output_wname, frame_out);
+
+        cv::waitKey(retard);
+        
+        input_stream >> frame_in;
+    }
+
+}
+
 
