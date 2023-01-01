@@ -575,8 +575,6 @@ cv::Mat fsiv_color_rescaling(const cv::Mat& in, const cv::Scalar& from, const cv
 {
     
     cv::Mat ret_v;
-    
-    // Hint: 
 
     if(in.type() == CV_32FC1) ret_v = cv::Mat::zeros(in.rows+2*r, in.cols+2*r, CV_32FC1);
 
@@ -602,30 +600,36 @@ cv::Mat fsiv_color_rescaling(const cv::Mat& in, const cv::Scalar& from, const cv
  
  cv::Mat fsiv_circular_expansion(cv::Mat const& in, const int r)
 {
-    CV_Assert(!in.empty());
-    CV_Assert(r>0);
-    cv::Mat ret_v;
-
+    
+    // imagen(x,y,w,h)
+    
+    
     ret_v = fsiv_fill_expansion(in, r); // Expansion de la imagen original
     
-    // cv::Rect(x,y,w,h). x,y es la esquina superior izquierda, w,h son el ancho y alto del rectangulo
-
-    in(cv::Rect(0,0,in.cols,r)).copyTo(ret_v(cv::Rect(r, ret_v.rows-r, in.cols,r))); // expansion superior
+    // Expansion del rectangulo superior de la imagen de entrada
+    in(cv::Rect(0,0,in.cols,r)).copyTo(ret_v(cv::Rect(r, in.rows+r, in.cols,r)));
     
-    in(cv::Rect(0,in.rows-r,in.cols,r)).copyTo(ret_v(cv::Rect(r, 0, in.cols,r))); // expansion inferior
+    // Expansion del rectangulo inferior de la imagen de entrada
+    in(cv::Rect(0,in.rows-r,in.cols,r)).copyTo(ret_v(cv::Rect(r, 0, in.cols,r)));
     
-    in(cv::Rect(0,0,r,in.rows)).copyTo(ret_v(cv::Rect(ret_v.cols-r,r,r,in.rows))); // expansion derecha
-
-    in(cv::Rect(in.cols-r,0,r,in.rows)).copyTo(ret_v(cv::Rect(0,r,r,in.rows))); // expansion izquierda
+    // Expansion del lado izquierdo de la imagen de entrada
+    in(cv::Rect(0,0,r,in.rows)).copyTo(ret_v(cv::Rect(in.cols+r,r,r,in.rows)));
     
-    in(cv::Rect(0,0,r,r)).copyTo(ret_v(cv::Rect(ret_v.cols-r,ret_v.rows-r,r,r))); // expansion superior derecha
+    // Expansion del lado derecho de la imagen de entrada
+    in(cv::Rect(in.cols-r,0,r,in.rows)).copyTo(ret_v(cv::Rect(0,r,r,in.rows)));
     
-    in(cv::Rect(in.cols-r,in.rows-r,r,r)).copyTo(ret_v(cv::Rect(0,0,r,r))); // expansion inferior izquierda
+    // Expansion de la esquina superior izquierda de la imagen de entrada
+    in(cv::Rect(0,0,r,r)).copyTo(ret_v(cv::Rect(in.cols+r,in.rows+r,r,r)));
     
-    in(cv::Rect(in.cols-r,0,r,r)).copyTo(ret_v(cv::Rect(0,ret_v.rows-r,r,r))); // expansion inferior derecha
-
-    in(cv::Rect(0,in.rows-r,r,r)).copyTo(ret_v(cv::Rect(ret_v.cols-r,0,r,r))); // expansion superior izquierda
-
+    // Expansion de la esquina superior derecha de la imagen de entrada
+    in(cv::Rect(in.cols-r,in.rows-r,r,r)).copyTo(ret_v(cv::Rect(0,0,r,r)));
+    
+    // Expansion de la esquina inferior izquierda de la imagen de entrada
+    in(cv::Rect(in.cols-r,0,r,r)).copyTo(ret_v(cv::Rect(0,in.rows+r,r,r)));
+    
+    // Expansion de la esquina inferior derecha de la imagen de entrada
+    in(cv::Rect(0,in.rows-r,r,r)).copyTo(ret_v(cv::Rect(in.cols+r,0,r,r)));
+    
     return ret_v;
 }
 
@@ -1106,4 +1110,83 @@ void fsiv_undistort_video_stream(cv::VideoCapture&input_stream,cv::VideoWriter& 
 
 }
 
+# bcksegm
 
+/**
+ * @brief Remove segmentation noise using morphological operations.
+ * @param img image where removing the noise.
+ * @param r is the radius of the structuring element.
+ * @pre img.type()==CV_8UC1
+ * @pre r>0
+ */
+ 
+ void fsiv_remove_segmentation_noise(cv::Mat & img, int r)
+{
+    
+    cv::Size tam(2*r+1,2*r+1);
+    cv::Mat structuringElement = cv::getStructuringElement(cv::MORPH_RECT, tam);
+    cv::Mat dst;
+    cv::morphologyEx(img, dst, cv::MORPH_CLOSE, structuringElement);
+    cv::morphologyEx(dst, img, cv::MORPH_OPEN, structuringElement);
+}
+
+/**
+ * @brief Applies a segmentation method based on image difference
+ * @param[in] prevFrame Previous image frame (RGB)
+ * @param[in] curFrame  Current image frame (RGB)
+ * @param[out] difimg  Single-channel generated mask
+ * @param[in] thr Theshold used to decide if a pixel contains enough motion to be considered foreground.
+ * @param[in] r  Radius to remove segmentation noise. (r=0 means not remove).
+ */
+ 
+ void fsiv_segm_by_dif(const cv::Mat & prevFrame, const cv::Mat & curFrame,cv::Mat & difimg, int thr, int r)
+{
+
+    // Imagenes en escala de grises
+    cv::Mat previous, cursor;
+    cv::cvtColor(prevFrame, previous, cv::COLOR_BGR2GRAY);
+    cv::cvtColor(curFrame, cursor, cv::COLOR_BGR2GRAY);
+    
+    cv::Mat zeros = cv::Mat::zeros(prevFrame.size(), prevFrame.type()); // Generamos la imagen
+    
+    cv::absdiff(previous, cursor, zeros);  // Diferencia absoluta entre los cursores
+    
+    difimg = zeros >= thr; // Comparamos con thr
+    
+    if(r > 0) fsiv_remove_segmentation_noise(difimg, r); // Eliminamos el ruido
+}
+
+/**
+ * @brief Applies a mask to an RGB image
+ * @param[in] frame RGB input image.
+ * @param[in] mask  Single-channel mask.
+ * @param[out] outframe Output RGB frame.
+ */
+ 
+ void fsiv_apply_mask(const cv::Mat & frame, const cv::Mat & mask,cv::Mat & outframe)
+{
+
+    cv::Mat masked;
+    
+    if(frame.channels()==3) // Frame tiene 3 canales
+    {
+        masked = cv::Mat::zeros(frame.size(), CV_8UC1); // Creamos la mascara
+        cv::cvtColor(mask, masked, cv::COLOR_GRAY2BGR); // Mascara en BGR
+    }
+    
+    else masked = mask; // Frame no tiene 3 canales
+    
+    outframe = frame & masked; // Aplicamos la mascara
+}
+
+/**
+ * @brief Learns a gaussian background model given an input stream.
+ * @param input     RGB input image.
+ * @param[out] mean  the mean image.
+ * @param[out] variance the variance image.
+ * @param[in] num_frames Number of frames used to estimated the model.
+ * @param[in] gauss_r is the radius used to gaussian avegaging of input frames.
+ * @param[in] wname Window used to show the captured frames (if gived).
+ */
+ 
+ 
