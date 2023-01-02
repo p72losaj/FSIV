@@ -1189,4 +1189,619 @@ void fsiv_undistort_video_stream(cv::VideoCapture&input_stream,cv::VideoWriter& 
  * @param[in] wname Window used to show the captured frames (if gived).
  */
  
+ bool fsiv_learn_gaussian_model(cv::VideoCapture & input, cv::Mat & mean,cv::Mat & variance,
+                                   int num_frames,int gauss_r,const char * wname)
+{
+    
+    bool was_ok = true;
+    // Remenber you can compute the variance as: varI = sum_n{I^2}/n - meanI²
+    // Hint: convert to input frames to float [0,1].
+    // Hint: use cv::accumulate() and cv::accumulateSquare().
+    
+    cv::Mat frame;
+    int key=0, i=0, size=2*gauss_r+1;
+
+    while(was_ok && key!=27 && i < num_frames) // Mientras no se pulse ESC o se alcance el numero de frames
+    {
+        was_ok=input.read(frame); // Leemos el frame
+
+        if(was_ok) // Frame leido correctamente
+        {
+            frame.convertTo(frame, CV_32F, 1/255.0); // Frame de tipo flotante [0,1]
+            if(gauss_r>0) cv::GaussianBlur(frame, frame, cv::Size(size, size), 0.0); // Filtro Gaussiano
+
+            // Calculamos la media y varianza
+            if(mean.empty() || variance.empty())
+            {
+                mean=frame.clone(); // Clonamos el frame
+                variance=frame.mul(frame);
+            }
+
+            else
+            {
+                cv::accumulate(frame, mean);
+                cv::accumulateSquare(frame, variance);
+            }
+
+            i++; // Incrementamos i
+            if(wname) cv::imshow(wname, frame); // Mostramos la imagen
+        }
+    }
+
+    if(was_ok) // Calculamos la media y la varianza
+    {   
+        mean = mean.mul(1.0/i);
+        variance=variance.mul(1.0/i) - mean.mul(mean);
+    }
+    return was_ok;
+}
+
+/**
+ * @brief Applies a segmentation method based on a Gaussian model of the background.
+ * @param[in] frame RGB input image.
+ * @param[out] mask  mask image with foreground pixels to 255.
+ * @param[in] mean Model's mean of each RGB pixel.
+ * @param[in] variance Model's variance of each RGB pixel.
+ * @param[in] k define the detection threshold.
+ * @param[in] r radius used to remove segmentation noise (value 0 means not remove).
+ */
  
+ void fsiv_segm_by_gaussian_model(const cv::Mat & frame,cv::Mat & mask,
+                            const cv::Mat & mean,const cv::Mat & variance, float k, int r)
+{
+
+    //Remenber: a point belongs to the foreground (255) if |mean-I| >= k*stdev
+    cv::Mat diff, sqrt;
+    cv::absdiff(frame, mean, diff);
+    // Obtenemos la desviacion tipica
+    cv::sqrt(variance, sqrt);
+    sqrt*=k;
+    // Mascara
+    cv::Mat masked = diff >= sqrt;
+    // Dividimos la mascara en canales
+    std::vector<cv::Mat> vector;
+    cv::split(masked, vector);
+    // Disyuncion entre los elementos del vector de canales
+    cv::bitwise_or(vector[0], vector[1], mask);
+    cv::bitwise_or(mask, vector[2], mask);
+    // Si el radio es positivo, eliminamos el ruido de segmentacion
+    if(r>0) fsiv_remove_segmentation_noise(mask, r);
+}
+
+/**
+ * @brief Update the Background Gaussian model.
+ * @param[in] frame is current frame image.
+ * @param[in] mask is the current segmentation mask.
+ * @param[in] frame_count is the number of this frame into the stream.
+ * @param[in,out] mean is the current Model's mean to be updated.
+ * @param[in,out] variance is the current Model's variance to be updated.
+ * @param[in] alpha is the update rate.
+ * @param[in] short_term_update_period specifies the short term update period.
+ * @param[in] long_term_update_period specifies the long term update period.
+ */
+ 
+ void fsiv_update_gaussian_model(const cv::Mat & frame,const cv::Mat & mask,
+                           unsigned long frame_count,cv::Mat & mean,cv::Mat & variance,
+                           float alpha,unsigned short_term_update_period,unsigned long_term_update_period)
+{
+    
+    //Remember: In the short term updating you must update the model using the background only (not mask).
+    //However in the long term updating you must update the model using both background and foreground (without mask).
+    //Hint: a period is met when (idx % period) == 0
+    //Hint: use accumulateWeighted to update the model.
+
+    // Matriz negativa de la mascara
+    cv::Mat negative;
+    cv::bitwise_not(mask, negative);
+    
+    // short term updating
+    if(short_term_update_period > 0 && frame_count % short_term_update_period == 0){
+        // computes a running average of the frames
+        cv::accumulateWeighted(frame, mean, alpha, negative);
+        cv::accumulateWeighted(frame.mul(frame), variance, alpha, negative);
+    }
+    
+    else if(long_term_update_period > 0 && frame_count % long_term_update_period == 0){
+        // computes a running average of the frames
+        cv::accumulateWeighted(frame, mean, alpha);
+        cv::accumulateWeighted(frame.mul(frame), variance, alpha);
+    }
+}
+
+# aug_real
+
+/**
+ * @brief Project a 3D Model on the image.
+ * @param[in,out] img the image where projecting the axes.
+ * @param[in] camera_matrix is the camera matrix.
+ * @param[in] dist_coeffs are the distortion coefficients.
+ * @param[in] rvec is the rotation vector.
+ * @param[in] tvec is the translation vector.
+ * @param[in] size is the length in word coordinates of each axis.
+ * @pre img.type()=CV_8UC3
+ */
+ 
+ void fsiv_draw_3d_model(cv::Mat &img, const cv::Mat& M, const cv::Mat& dist_coeffs,
+                   const cv::Mat& rvec, const cv::Mat& tvec,const float size)
+{
+    
+    // Vector de puntos 3D
+    std::vector<cv::Point3f> _3d_points = {
+        cv::Point3f(0,0,0), cv::Point3f(size,0,0), cv::Point3f(0,size,0), cv::Point3f(size,size,0), 
+        cv::Point3f(size/2,size/2,-size/2)};
+    // Vector de puntos 2D
+    std::vector<cv::Point2f> _2d_points(_3d_points.size());
+    // Proyectamos los puntos
+    cv::projectPoints(_3d_points, rvec, tvec, M, dist_coeffs, _2d_points);
+    // Unimos los puntos
+    cv::line(img, _2d_points[0], _2d_points[1], cv::Scalar(0, 0, 255), 3);
+    cv::line(img, _2d_points[1], _2d_points[3], cv::Scalar(0, 255, 0), 3);
+    cv::line(img, _2d_points[3], _2d_points[2], cv::Scalar(255, 0, 0), 3);
+    cv::line(img, _2d_points[2], _2d_points[0], cv::Scalar(0, 0, 255), 3);
+    cv::line(img, _2d_points[0], _2d_points[4], cv::Scalar(0, 255, 0), 3);
+    cv::line(img, _2d_points[1], _2d_points[4], cv::Scalar(255, 0, 0), 3);
+    cv::line(img, _2d_points[2], _2d_points[4], cv::Scalar(0, 0, 255), 3);
+    cv::line(img, _2d_points[3], _2d_points[4], cv::Scalar(0, 255, 0), 3);
+}
+
+
+/**
+ * @brief Project input image on the output using the homography of the calibration board on the image plane.
+ * @arg[in] input is the image to be projected.
+ * @arg[in|out] is the output image.
+ * @arg[in] board_size is the inner board gemometry.
+ * @arg[in] _2dpoints are the image coordinates of the board corners.
+ * @pre input.type()==CV_8UC3.
+ * @pre output.type()==CV_8UC3.
+ */
+ 
+ void
+fsiv_project_image(const cv::Mat& input, cv::Mat& output,
+                   const cv::Size& board_size,
+                   const std::vector<cv::Point2f>& _2dpoints)
+{
+    CV_Assert(!input.empty() && input.type()==CV_8UC3);
+    CV_Assert(!output.empty() && output.type()==CV_8UC3);
+    CV_Assert(board_size.area()==_2dpoints.size());
+    //TODO
+    // Creamos la máscara
+    cv::Mat mask = cv::Mat::zeros(output.rows, output.cols, CV_8UC1);
+    // Esquinas del tablero
+    std::vector<cv::Point2f> _2dpoints_ = {
+               _2dpoints[0], 
+               _2dpoints[board_size.width-1], 
+               _2dpoints[board_size.height * board_size.width-1], 
+               _2dpoints[(board_size.height-1) * board_size.width]
+    };
+    std::vector<cv::Point> corners = {_2dpoints_[0], _2dpoints_[1], _2dpoints_[2], _2dpoints_[3]};
+    // Rellenamos la máscara
+    cv::fillConvexPoly(mask, corners, cv::Scalar(255, 255, 255));
+    // Transformación de perspectiva
+    std::vector<cv::Point2f> _2dpoints_i = {
+               cv::Point2f(0, 0), 
+               cv::Point2f(input.cols-1, 0), 
+               cv::Point2f(input.cols-1, input.rows-1), 
+               cv::Point2f(0, input.rows-1)
+    };
+    cv::Mat transform = cv::getPerspectiveTransform(_2dpoints_i, _2dpoints_);
+    // Aplicamos la transformación
+    cv::Mat out = cv::Mat::zeros(output.rows, output.cols, CV_8UC1);
+    cv::warpPerspective(input, out, transform, output.size());
+    // Copiamos la imagen
+    out.copyTo(output, mask);
+}
+ 
+ # histapathology
+ 
+ /**
+ * @brief Create a KNN classifier.
+ *
+ * @param K is the number of NN neighbours used to classify a sample.
+ * @return an instance of the classifier.
+ */
+ 
+ cv::Ptr<cv::ml::StatModel>
+fsiv_create_knn_classifier(int K)
+{
+    cv::Ptr<cv::ml::KNearest> knn;
+
+    // TODO: Create an KNN classifier.
+    // Hint: Set algorithm type to BRUTE_FORCE.
+    // Hint: Set it as a classifier (setIsClassifier)
+    // Remenber: Set hyperparameter K.
+    knn = cv::ml::KNearest::create();
+    knn->setDefaultK(K);
+    //
+
+    CV_Assert(knn != nullptr);
+    return knn;
+}
+
+/**
+ * @brief Create a SVM classifier.
+ *
+ * @param Kernel is the kernel type @see cv::ml::SVM::KernelTypes
+ * @param C is the SVM's C parameter.
+ * @param degree is the degree when kernel type is POLY
+ * @param gamma is the gamma exponent when kernel type is RBF.
+ * @return an instance of the classifier
+ */
+ 
+ cv::Ptr<cv::ml::StatModel>
+fsiv_create_svm_classifier(int Kernel,
+                           double C,
+                           double degree,
+                           double gamma)
+{
+    cv::Ptr<cv::ml::SVM> svm;
+    // TODO: Create an SVM classifier.
+    // Set algorithm type to C_SVC.
+    // Set hyperparameters: Kernel, C, Gamma, Degree.
+    svm = cv::ml::SVM::create();
+    svm->setKernel(Kernel);
+    svm->setC(C);
+    svm->setDegree(degree);
+    svm->setGamma(gamma);
+    //
+    CV_Assert(svm != nullptr);
+    return svm;
+}
+
+/**
+ * @brief Create a Random Trees classifier.
+ *
+ * @param V is the number of features used by node. Value 0 means not set this value.
+ * @param T is the maximum number of generated trees.
+ * @param E is minimun the OOB error allowed.
+ * @return an instance of the classifier
+ */
+ 
+ cv::Ptr<cv::ml::StatModel>
+fsiv_create_rtrees_classifier(int V,
+                              int T,
+                              double E)
+{
+    cv::Ptr<cv::ml::RTrees> rtrees;
+    // TODO: Create an RTrees classifier.
+    // Set hyperparameters: Number of features used per node (ActiveVarCount),
+    //  max num of trees, and required OOB error.
+    // Remenber:: to set T and E parameters use a cv::TerminCriteria object
+    //    where T is the max iterations and E is the epsilon.
+    rtrees = cv::ml::RTrees::create();
+    rtrees->setActiveVarCount(V);
+    rtrees->setTermCriteria(cv::TermCriteria(cv::TermCriteria::MAX_ITER + cv::TermCriteria::EPS, T, E));
+    //
+    CV_Assert(rtrees != nullptr);
+    return rtrees;
+}
+
+/**
+ * @brief Train a classifier.
+ *
+ * @param clsf the instance of the classifier to be trainned.
+ * @param samples are the input samples.
+ * @param labels are the input labels.
+ * @param flags are the train flags.
+ * @pre clfs != nullptr
+ * @post clfs->isTrained()
+ */
+ 
+ void fsiv_train_classifier(cv::Ptr<cv::ml::StatModel> &clsf,
+                           const cv::Mat &samples, const cv::Mat &labels,
+                           int flags)
+{
+    CV_Assert(clsf != nullptr);
+
+    // TODO: train the classifier.
+    // Hint: you can use v::ml::TrainData to set the parameters.
+    // Remenber: we are using ROW_SAMPLE ordering in the dataset.
+    cv::Ptr<cv::ml::TrainData> data =  cv::ml::TrainData::create(samples,cv::ml::ROW_SAMPLE, labels);
+    clsf->train(cv::ml::TrainData::create(samples,cv::ml::ROW_SAMPLE, labels));
+    //
+    CV_Assert(clsf->isTrained());
+}
+
+/**
+ * @brief Make predictions using a trained classifier.
+ *
+ * @param clsf an instance of the classifier to be used.
+ * @param samples the samples to predict the labels.
+ * @param predictions the labels predicted.
+ * @pre clsf->isTrained()
+ * @post predictions.depth()=CV_32S
+ * @post predictions.rows == samples.rows.
+ */
+ 
+ void fsiv_make_predictions(cv::Ptr<cv::ml::StatModel> &clsf,
+                           const cv::Mat &samples, cv::Mat &predictions)
+{
+    CV_Assert(clsf != nullptr);
+    CV_Assert(clsf->isTrained());
+    // TODO: do the predictions.
+    // Remenber: the classefied used float to save the labels.
+    clsf->predict(samples, predictions);
+    predictions.convertTo(predictions, CV_32S);
+    //
+    CV_Assert(predictions.depth() == CV_32S);
+    CV_Assert(predictions.rows == samples.rows);
+}
+
+/**
+ * @brief Load a knn classifier's model from file.
+ *
+ * @param model_fname is the file name.
+ * @return an instance of the classifier.
+ * @post ret_v != nullptr
+ */
+ 
+ cv::Ptr<cv::ml::StatModel>
+fsiv_load_knn_classifier_model(const std::string &model_fname)
+{
+    cv::Ptr<cv::ml::StatModel> clsf;
+
+    // TODO: load a KNN classifier.
+    // Hint: use the generic interface cv::Algorithm::load< classifier_type >
+    clsf = cv::Algorithm::load<cv::ml::KNearest>(model_fname);
+    //
+
+    CV_Assert(clsf != nullptr);
+    return clsf;
+}
+
+/**
+ * @brief Load a svm classifier's model from file.
+ *
+ * @param model_fname is the file name.
+ * @return an instance of the classifier.
+ * @post ret_v != nullptr
+ */
+ 
+ cv::Ptr<cv::ml::StatModel>
+fsiv_load_svm_classifier_model(const std::string &model_fname)
+{
+    cv::Ptr<cv::ml::StatModel> clsf;
+
+    // TODO: load a SVM classifier.
+    // Hint: use the generic interface cv::Algorithm::load< classifier_type >
+    clsf = cv::Algorithm::load<cv::ml::SVM>(model_fname);
+    //
+
+    CV_Assert(clsf != nullptr);
+    return clsf;
+}
+
+/**
+ * @brief Load a rtrees classifier's model from file.
+ *
+ * @param model_fname is the file name.
+ * @return an instance of the classifier.
+ * @post ret_v != nullptr
+ */
+ 
+ cv::Ptr<cv::ml::StatModel>
+fsiv_load_rtrees_classifier_model(const std::string &model_fname)
+{
+    cv::Ptr<cv::ml::StatModel> clsf;
+
+    // TODO: load a RTrees classifier.
+    // Hint: use the generic interface cv::Algorithm::load< classifier_type >
+    clsf = cv::Algorithm::load<cv::ml::RTrees>(model_fname);
+    //
+
+    CV_Assert(clsf != nullptr);
+    return clsf;
+}
+
+/**
+ * @brief Load a classifier model from a file storage.
+ * 
+ * @param[in] model_fname  is the file storage pathname.
+ * @param[out] clsf_id is the loaded classifier id.
+ * @return the classifier instance. 
+ */
+ 
+ cv::Ptr<cv::ml::StatModel>
+load_classifier_model(const std::string &model_fname, int& clsf_id)
+{
+    cv::FileStorage f;
+    cv::Ptr<cv::ml::StatModel> clsf;
+
+    f.open(model_fname, cv::FileStorage::READ);
+    auto node = f["fsiv_classifier_type"];
+    if (node.empty() || !node.isInt())
+        throw std::runtime_error("Could not find 'fsiv_classifier_type' "
+                                 "label in model file");    
+    node >> clsf_id;
+    f.release();
+    if (clsf_id == 0)
+        clsf = fsiv_load_knn_classifier_model(model_fname);
+    else if (clsf_id == 1)
+        clsf = fsiv_load_svm_classifier_model(model_fname);
+    else if (clsf_id == 2)
+        clsf = fsiv_load_rtrees_classifier_model(model_fname);
+    else
+        throw std::runtime_error("Unknown classifier id: " +
+                                 std::to_string(clsf_id));
+
+    CV_Assert(clsf != nullptr);
+    return clsf;
+}
+
+/**
+ * @brief Compute the confussion matrix.
+ * 
+ * Is a matrix where the rows are the ground-truth labels and the columns are
+ * the predicted labels.
+ * 
+ * @param true_labels are supervised labels.
+ * @param predicted_labels are the predicted labels.
+ * @param n_categories is the number of categories.
+ * @return the confussion matrix.
+ */
+ 
+ cv::Mat
+fsiv_compute_confusion_matrix(const cv::Mat &true_labels,
+                              const cv::Mat &predicted_labels,
+                              int n_categories)
+{
+    CV_Assert(true_labels.rows == predicted_labels.rows);
+    CV_Assert(true_labels.type() == CV_32SC1);
+    CV_Assert(predicted_labels.type() == CV_32SC1);
+    cv::Mat cmat = cv::Mat::zeros(n_categories, n_categories, CV_32F);
+
+    //TODO: Compute the confussion matrix.
+    //Remenber: Rows are the Ground Truth. Cols are the predictions.
+    
+    for(int i = 0; i < true_labels.rows; i++){
+        int row = true_labels.at<int>(i);
+        if(row < 0){
+            row = 0;
+        }
+        int col = predicted_labels.at<int>(i);
+        if(col < 0){
+            col = 0;
+        }
+        cmat.at<float>(row, col) += 1;
+    }
+
+    //
+    CV_Assert(std::abs(cv::sum(cmat)[0] - static_cast<double>(true_labels.rows)) <=
+              1.0e-6);
+    return cmat;
+}
+
+/**
+ * @brief Compute the accuracy metrix.
+ * 
+ * @param cmat is the confussion matrix.
+ * @return the accuracy.
+ */
+ 
+ float fsiv_compute_accuracy(const cv::Mat &cmat)
+{
+    CV_Assert(!cmat.empty() && cmat.type() == CV_32FC1);
+    CV_Assert(cmat.rows == cmat.cols && cmat.rows > 1);
+
+    float acc = 0.0;
+
+    //TODO: compute the accuracy.
+    //Hint: the accuracy is the rate of correct classifications
+    //  to the total.
+    //Remenber: avoid zero divisions!!.
+    // total = np.sum(cmat)
+    float total = 0;
+    for(int i = 0; i < cmat.rows; i++){
+        for(int j = 0; j < cmat.cols; j++){
+            total += cmat.at<float>(i, j);
+        }
+    }
+    // if total > 0.0
+    if(total > 0.0){
+        // diag = np.sum(np.diag(cmat))
+        float diag = 0;
+        for(int i = 0; i < cmat.rows; i++){
+            diag += cmat.at<float>(i, i);
+        }
+        // acc = diag / total
+        acc = diag / total;
+    }
+    //
+    CV_Assert(acc >= 0.0f && acc <= 1.0f);
+    return acc;
+}
+
+/**
+ * @brief Compute the mean recognition rate.
+ * 
+ * @param rr are the recognition rate per category.
+ * @return the mean recognition rate.
+ */
+ 
+ float fsiv_compute_mean_recognition_rate(const std::vector<float> &rr)
+{
+    float m_rr = 0.0;
+    //TODO
+    //Remenber: the MRR is the mean value of the recognition rates.
+    // total = np.sum(rr)
+    float total = 0;
+    for(int i = 0; i < rr.size(); i++){
+        total += rr[i];
+    }
+    // if total > 0.0
+    if(total > 0.0){
+        // m_rr = total / len(rr)
+        m_rr = total / rr.size();
+    }
+    
+    //
+    return m_rr;
+}
+
+/**
+ * @brief Output model metrics.
+ * 
+ * @param gt_labels are supervised labels.
+ * @param predicted_labels are predicted labels.
+ * @param categories is a vector with the categories names.
+ * @param out is the stream to print out.
+ */
+ 
+ void print_model_metrics(const cv::Mat &gt_labels,
+                         const cv::Mat &predicted_labels,
+                         const std::vector<std::string>& categories,
+                         std::ostream &out)
+{
+    cv::Mat cmat = fsiv_compute_confusion_matrix(gt_labels, predicted_labels,
+                                                 categories.size());
+    float acc = fsiv_compute_accuracy(cmat);
+    std::vector<float> rr = fsiv_compute_recognition_rates(cmat);
+    float m_rr = fsiv_compute_mean_recognition_rate(rr);
+    out << "#########################" << std::endl;
+    out << "Model metrics:         " << std::endl;
+    out << std::endl;
+    out << "Recognition rate per class:" << std::endl;
+    for (size_t i = 0; i < rr.size(); ++i)
+        out << std::setw(20) << std::setfill(' ')
+            << categories[i]
+            << ": " << rr[i] << std::endl;
+    out << std::endl;
+    out << "Mean recognition rate: " << m_rr << std::endl;
+    out << "Accuracy: " << acc << std::endl;
+    
+
+}
+
+/**
+ * @brief compute the recogniton rate per category.
+ * 
+ * @param cmat is the confussion matrix.
+ * @return a vector with the recognition rate per category.
+ */
+ 
+ std::vector<float>
+fsiv_compute_recognition_rates(const cv::Mat &cmat)
+{
+    CV_Assert(!cmat.empty() && cmat.type() == CV_32FC1);
+    CV_Assert(cmat.rows == cmat.cols);
+    std::vector<float> RR(cmat.rows);
+
+    for (int category = 0; category < cmat.rows; ++category)
+    {
+        RR[category] = 0.0;
+
+        //TODO: compute the recognition rate (RR) for the category.
+        //Avoid zero divisions!!.
+        //  to the total of samples of the category.
+        float total = 0;
+        for(int i = 0; i < cmat.rows; i++){
+            total += cmat.at<float>(category, i);
+        }
+        if(total != 0){
+            RR[category] = cmat.at<float>(category, category) / total;
+        }
+
+        //
+        CV_Assert(RR[category] >= 0.0f && RR[category] <= 1.0f);
+    }
+    return RR;
+}
