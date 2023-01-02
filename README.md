@@ -13,10 +13,9 @@ Funciones de test de las practicas
 cv::Mat convert_gray_to_rgb(const cv::Mat& img)
 {
      
+    // 1. Convertimos de gray a RGB
     cv::Mat out;
-
-    cv::cvtColor(img,out,cv::COLOR_GRAY2BGR);  // Convertimos a RGB
-    
+    cv::cvtColor(img,out,cv::COLOR_GRAY2BGR);  
     return out;
 }
 
@@ -29,10 +28,9 @@ cv::Mat convert_gray_to_rgb(const cv::Mat& img)
  cv::Mat convert_rgb_to_gray(const cv::Mat& img)
 {
 
+    // 1. Convertimos de rgb a gray
     cv::Mat out;    
-    
-    cv::cvtColor(img,out,cv::COLOR_BGR2GRAY); // Convertimos a gray    
-    
+    cv::cvtColor(img,out,cv::COLOR_BGR2GRAY); 
     return out;
 }
 
@@ -51,10 +49,10 @@ cv::Mat convert_gray_to_rgb(const cv::Mat& img)
  cv::Mat generate_rectagle_mask(int img_width, int img_height, int x, int y, int rect_width, int rect_height, int type)
 {
      
-     cv::Mat mask = cv::Mat::zeros(img_height,img_width, type); // mascara 
-     
-     cv::rectangle(mask, cv::Point(x,y), cv::Point(x+rect_width,y+rect_height), cv::Scalar(255,255,255), cv::FILLED); // rectangulo
-     
+     // 1. Generamos una mascara vacia
+     cv::Mat mask = cv::Mat::zeros(img_height,img_width, type);
+     // 2. Rellenamos la mascara aplicando ROI rectangular
+     cv::rectangle(mask, cv::Point(x,y), cv::Point(x+rect_width,y+rect_height), cv::Scalar(255,255,255), cv::FILLED);
      return mask;
 }
 
@@ -72,10 +70,10 @@ cv::Mat convert_gray_to_rgb(const cv::Mat& img)
  cv::Mat generate_circle_mask(int img_width, int img_height, int x, int y, int radius, int type)
 {
     
-    cv::Mat mask = cv::Mat::zeros(img_height, img_width, type); // mascara
-    
-    cv::circle(mask, cv::Point(x,y), radius, cv::Scalar(255,255,255), cv::FILLED); // circulo
-    
+    // 1. Generamos una mascara vacia
+    cv::Mat mask = cv::Mat::zeros(img_height, img_width, type);
+    // 2. Generamos la mascara con una ROI circular
+    cv::circle(mask, cv::Point(x,y), radius, cv::Scalar(255,255,255), cv::FILLED);
     return mask;
 }
 
@@ -91,14 +89,13 @@ cv::Mat convert_gray_to_rgb(const cv::Mat& img)
 cv::Mat generate_polygon_mask(int img_width, int img_height, std::vector<cv::Point>& points, int type)
 {
     
-    cv::Mat mask = cv::Mat::zeros(img_height, img_width, type); // Mascara
-    
-    std::vector< std::vector<cv::Point> > polys; // vector de puntos
-    
-    polys.push_back(points); // guardamos los puntos
-    
-    cv::fillPoly(mask, polys, cv::Scalar(255,255,255)); // poligono
-    
+    // 1. Generamos una mascara vacia
+    cv::Mat mask = cv::Mat::zeros(img_height, img_width, type);
+    // 2. Obtenemos los puntos del poligono
+    std::vector< std::vector<cv::Point> > polys;
+    polys.push_back(points);
+    // 3. Generamos la mascara con una ROI poligonal
+    cv::fillPoly(mask, polys, cv::Scalar(255,255,255));
     return mask;
 }
 
@@ -114,15 +111,14 @@ cv::Mat combine_images(const cv::Mat& foreground, const cv::Mat& background,cons
 {
     
     cv::Mat output;
-    
-    cv::bitwise_and(foreground, mask,foreground); // Primer plano
-    
-    cv::bitwise_not(mask, mask); // Negamos la mascara
-    
-    cv::bitwise_and(background, mask, background); // Fondo de la imagen
-    
-    cv::bitwise_or(foreground, background,output); // combinar imagenes
-    
+    // 1. Obtenemos el primer plano de la imagen
+    cv::bitwise_and(foreground, mask,foreground);
+    // 2. Negamos la mascara
+    cv::bitwise_not(mask, mask);
+    // 3. Obtenemos el fondo de la imagen
+    cv::bitwise_and(background, mask, background);
+    // 4. Combinamos el primer plano y el fondo de la imagen
+    cv::bitwise_or(foreground, background,output);
     return output;
 }
 
@@ -138,9 +134,9 @@ cv::Mat combine_images(const cv::Mat& foreground, const cv::Mat& background,cons
  
 cv::Mat convert_image_byte_to_float(const cv::Mat& img, cv::Mat& out)
 {
-     
-    img.convertTo(out,CV_32F, 1.0/255.0); // imagen con valores flotante
     
+    // 1. Imagen de tipo byte a flotante
+    img.convertTo(out,CV_32F, 1.0/255.0);
     return out;
 }
 
@@ -155,8 +151,8 @@ cv::Mat convert_image_byte_to_float(const cv::Mat& img, cv::Mat& out)
 cv::Mat convert_image_float_to_byte(const cv::Mat& img, cv::Mat& out)
 {
     
-    img.convertTo(out, CV_8U, 255.0); // imagen con valores byte
-    
+    // 1. Imagen de tipo float a byte
+    img.convertTo(out, CV_8U, 255.0);
     return out;
 }
 
@@ -170,8 +166,8 @@ cv::Mat convert_image_float_to_byte(const cv::Mat& img, cv::Mat& out)
 cv::Mat convert_bgr_to_hsv(const cv::Mat& img, cv::Mat& out)
 {
     
-    cv::cvtColor(img, out, cv::COLOR_BGR2HSV); // imagen hsv
-    
+    // 1. Imagen BGR a HSV
+    cv::cvtColor(img, out, cv::COLOR_BGR2HSV);
     return out;
 }
 
@@ -185,8 +181,8 @@ cv::Mat convert_bgr_to_hsv(const cv::Mat& img, cv::Mat& out)
 cv::Mat convert_hsv_to_bgr(const cv::Mat& img, cv::Mat& out)
 {
     
-    cv::cvtColor(img,out,cv::COLOR_HSV2BGR); // imagen bgr
-    
+    // 1. Imagen HSV a BGR
+    cv::cvtColor(img,out,cv::COLOR_HSV2BGR);
     return out;
 }
 
@@ -210,32 +206,31 @@ cv::Mat convert_hsv_to_bgr(const cv::Mat& img, cv::Mat& out)
 cv::Mat cbg_process (const cv::Mat & in, cv::Mat& out, double contrast, double brightness, double gamma, bool only_luma)
 {
     
-    std::vector<cv::Mat> canales; // vector de canales
-    
-    convert_image_byte_to_float(in,out); // imagen de salida en valores flotante
-    
-    if(only_luma && in.channels()==3) convert_bgr_to_hsv(out,out); // Canal luma -> imagen salida en hsv
-    
-    cv::split(out,canales); // dividimos la imagen de salida en canales
-    
-    if(only_luma && in.channels() == 3){ // canal luma -> canal_hsv = canal_hsv^g * c + b
-        cv::pow(canales[2], gamma, canales[2]); // canal_hsv = canal_hsv^g
-        canales[2] = contrast * canales[2] + brightness; // canal_hsv = canal_hsv*c+b
+    // 1. Imagen de salida en valores flotante
+    convert_image_byte_to_float(in,out);
+    // Opcion luma -> imagen salida en hsv
+    if(only_luma && in.channels()==3) convert_bgr_to_hsv(out,out); 
+    // 2. Dividimos la imagen en canales
+    std::vector<cv::Mat> canales;
+    cv::split(out,canales);
+    // 3. Opcion luma -> Procesamos el canal luma
+    if(only_luma && in.channels() == 3){
+        cv::pow(canales[2], gamma, canales[2]);
+        canales[2] = contrast * canales[2] + brightness;
     }
-    
-    else{ // sin canal luma -> canales^g * c + b
-        for(size_t i=0; i<canales.size(); i++){ // recorremos los canales
-            cv::pow(canales[i], gamma, canales[i]); // canal = canal^g
-            canales[i] = contrast * canales[i] + brightness; // canal = canal*c+b
+    // 3. Procesamos todos los canales
+    else{
+        for(size_t i=0; i<canales.size(); i++){
+            cv::pow(canales[i], gamma, canales[i]);
+            canales[i] = contrast * canales[i] + brightness;
         }
     }
-    
-    cv::merge(canales, out); // unimos los canales -> formar imagen de salida
-    
-    if(only_luma && in.channels() == 3) convert_hsv_to_bgr(out,out); // canal luma -> imagen salida en bgr
-    
-    convert_image_float_to_byte(out,out); // imagen salida en byte
-    
+    // 4. Unimos los canales
+    cv::merge(canales, out);
+    // Opcion luma -> Convertimos la imagen en BGR
+    if(only_luma && in.channels() == 3) convert_hsv_to_bgr(out,out);
+    // 5. Convertimos la imagen a byte
+    convert_image_float_to_byte(out,out);
     return out;
 }
 
@@ -255,14 +250,11 @@ cv::Mat cbg_process (const cv::Mat & in, cv::Mat& out, double contrast, double b
 cv::Mat fsiv_compute_histogram(const cv::Mat& in, cv::Mat& hist)
 {
     
+    // 1. Calculamos el histograma
     int histSize[]= {256}, channels[] = {0};
-    
     float intensityRanges[] = {0, 256};
-    
     const float* ranges[] = {intensityRanges};
-    
-    cv::calcHist(&in, 1, channels, cv::Mat(), hist, 1, histSize, ranges, true, false); // calculamos el histograma
-    
+    cv::calcHist(&in, 1, channels, cv::Mat(), hist, 1, histSize, ranges, true, false);
     return hist;
 }
 
@@ -279,7 +271,8 @@ cv::Mat fsiv_compute_histogram(const cv::Mat& in, cv::Mat& hist)
 void fsiv_normalize_histogram(cv::Mat& hist)
 {
     
-    cv::normalize(hist,hist,1,0, cv::NORM_L1, -1, cv::Mat()); // normalizamos el histograma
+    // 1. Normalizamos el histograma
+    cv::normalize(hist,hist,1,0, cv::NORM_L1, -1, cv::Mat());
 }
 
 /**
@@ -295,7 +288,8 @@ void fsiv_normalize_histogram(cv::Mat& hist)
 void fsiv_accumulate_histogram(cv::Mat& hist)
 {
     
-    for(size_t i=0; i<hist.rows; i++) hist.at<float>(i) += hist.at<float>(i-1); // histograma acumulado
+    // 1. Calculamos el histograma acumulado
+    for(size_t i=0; i<hist.rows; i++) hist.at<float>(i) += hist.at<float>(i-1);
 }
 
 /**
@@ -312,29 +306,25 @@ void fsiv_accumulate_histogram(cv::Mat& hist)
 cv::Mat fsiv_create_equalization_lookup_table(const cv::Mat& hist, bool hold_median)
 {
     
-    cv::Mat lkt = hist.clone(); // clonamos el histograma
-    
-    fsiv_normalize_histogram(lkt); // normalizamos el histograma
-    
-    fsiv_accumulate_histogram(lkt); // histograma acumulado
-    
-    if(hold_median){ // hold_median = true
-        
+    cv::Mat lkt = hist.clone();
+    // 1. Normalizamos el histograma
+    fsiv_normalize_histogram(lkt);
+    // 2. Calculamos el histograma acumulado
+    fsiv_accumulate_histogram(lkt);
+    // 3.1.Opcion hold median
+    if(hold_median){ 
+        // 4. Obtenemos la posicion media del histograma
         int median = 0;
-        
         float position=0;
-        
-        while(position < 0.5 && median < 256){ // Posicion media del histograma
+        while(position < 0.5 && median < 256){
             median++;
             position = lkt.at<float>(median);
         }
-        
+        // 5. Obtenemos las 2 mitades del histograma
         if(0<median<255){
-            
             float medianf = median;
-            
-            cv::Range first_half(0,median), second_half(median,256); // Mitades del histograma
-            
+            // Obtenemos el rango de las 2 mitades del histograma
+            cv::Range first_half(0,median), second_half(median,256);
             // Primera mitad del histograma
             lkt(first_half, cv::Range::all()) /= position ; 
             lkt(first_half, cv::Range::all()) *= median;
@@ -344,11 +334,11 @@ cv::Mat fsiv_create_equalization_lookup_table(const cv::Mat& hist, bool hold_med
             lkt(second_half, cv::Range::all())*=255.0-median;
             lkt(second_half, cv::Range::all())+=medianf;
         }
-        lkt.convertTo(lkt, CV_8UC1); // Imagen en CV_8UC1
+        // 6. Convertimos la imagen a CV_8UC1
+        lkt.convertTo(lkt, CV_8UC1);
     }
-    
-    else lkt.convertTo(lkt, CV_8UC1, 255.0); // Imagen en CV_8UC1
-    
+    // 3.2.Opcion sin hold median -> Convertimos la imagen a CV_8UC1
+    else lkt.convertTo(lkt, CV_8UC1, 255.0);
     return lkt;
 }
 
@@ -368,7 +358,8 @@ cv::Mat fsiv_create_equalization_lookup_table(const cv::Mat& hist, bool hold_med
 cv::Mat fsiv_apply_lookup_table(const cv::Mat&in, const cv::Mat& lkt,cv::Mat& out)
 {
 
-    cv::LUT(in,lkt,out); // lookup table
+    // 1. Aplicamos un lookup table
+    cv::LUT(in,lkt,out);
     return out;
 }
 
@@ -387,25 +378,31 @@ cv::Mat fsiv_image_equalization(const cv::Mat& in, cv::Mat& out, bool hold_media
 {
     
     cv::Mat hist, lkt;
-    out = in.clone(); // copiamos la imagen de entrada
-    
-    if(radius > 0){ // Aplicamos equualizacion local
+    out = in.clone();
+    // 1.1. Aplicamos procesamiento lucal
+    if(radius > 0){
         for(int i = 0; i <= in.rows - (2*radius+1); i++){
             for(int j = 0; j <= in.cols - (2*radius+1); j++){
-                cv::Mat ventana =  in(cv::Rect(j, i, 2*radius+1, 2*radius+1)); // ventana de radio r
-                fsiv_compute_histogram(ventana, hist); // computamos el histograma
-                lkt = fsiv_create_equalization_lookup_table(hist, hold_median); // equalizamos el histograma
-                out.at<uchar>(i+radius, j+radius)=lkt.at<uchar>(in.at<uchar>(i+radius, j+radius)); // obtenemos la imagen de salida
+                // 2. Obtenemos una ventana de radio r
+                cv::Mat ventana =  in(cv::Rect(j, i, 2*radius+1, 2*radius+1));
+                // 3. Aplicamos la computacion del histograma
+                fsiv_compute_histogram(ventana, hist);
+                // 4. Creamos la equalizacion del histograma
+                lkt = fsiv_create_equalization_lookup_table(hist, hold_median);
+                // 5. Obtenemos la imagen de salida
+                out.at<uchar>(i+radius, j+radius)=lkt.at<uchar>(in.at<uchar>(i+radius, j+radius));
                }
            }
        }
-    
-    else{ // Equalizamos el histograma
-           fsiv_compute_histogram(in, hist); // generamos el histograma
-           lkt = fsiv_create_equalization_lookup_table(hist, hold_median); // equalizamos el histograma
-           fsiv_apply_lookup_table(in, lkt, out); // aplicamos lookup table
+    // 1.2. Equalizamos el histograma
+    else{ 
+           // 2. Generamos el histograma
+           fsiv_compute_histogram(in, hist);
+           // 3. Creamos la tabla de equalizacion lookup
+           lkt = fsiv_create_equalization_lookup_table(hist, hold_median);
+           // 4. Aplicamos lookup
+           fsiv_apply_lookup_table(in, lkt, out);
        }
-       
      return out;
 }
 
@@ -425,13 +422,11 @@ cv::Mat fsiv_color_rescaling(const cv::Mat& in, const cv::Scalar& from, const cv
 {
 
     cv::Mat out;
-    
     cv::Scalar rescaling;
-    
-    cv::divide(to, from, rescaling); // Obtenemos el reescalado de la imagen
-    
-    out=in.mul(rescaling); // aplicamos el reescalado de la imagen
-    
+    // 1. Obtenemos el reescalado de la imagen
+    cv::divide(to, from, rescaling);
+    // 2. Reescalamos la imagen
+    out=in.mul(rescaling);
     return out;
 }
 
@@ -449,15 +444,14 @@ cv::Mat fsiv_color_rescaling(const cv::Mat& in, const cv::Scalar& from, const cv
     cv::Mat out;
     double min, max;
     cv::Point minp, maxp;
-    
-    cv::cvtColor(in, out, cv::COLOR_BGR2GRAY); // imagen en gray
-    
-    cv::minMaxLoc(out , &min, &max, &minp, &maxp); // Localizamos el minimo y maximo de la imagen
-    
-    cv::Scalar white = in.at<cv::Vec3b>(maxp); // Obtenemos el escalar del blanco de la imagen
-    
-    out = fsiv_color_rescaling(in, white, cv::Scalar(255,255,255)); // Reescalamos la imagen
-    
+    // 1. Imagen de bgr a gray
+    cv::cvtColor(in, out, cv::COLOR_BGR2GRAY);
+    // 2. Obtenemos el minimo y maximo pixel de la imagen
+    cv::minMaxLoc(out , &min, &max, &minp, &maxp);
+    // 3. Obtenemos el scalar blanco
+    cv::Scalar white = in.at<cv::Vec3b>(maxp);
+    // 4. Reescalamos el color blanco de la imagen
+    out = fsiv_color_rescaling(in, white, cv::Scalar(255,255,255));
     return out;
 }
 
@@ -472,10 +466,10 @@ cv::Mat fsiv_color_rescaling(const cv::Mat& in, const cv::Scalar& from, const cv
  cv::Mat fsiv_gw_color_balance(cv::Mat const& in)
 {
     
-    cv::Scalar grey = cv::mean(in); // Escalar gris de la imagen
-    
-    cv::Mat out = fsiv_color_rescaling(in, grey, cv::Scalar(128,128,128)); // reescalamos la imagen
-    
+    // 1. Obtenemos el scalar del color gris de la imagen
+    cv::Scalar grey = cv::mean(in);
+    // 2. Reescalamos el color gris de la imagen
+    cv::Mat out = fsiv_color_rescaling(in, grey, cv::Scalar(128,128,128));
     return out;
 }
 
@@ -493,18 +487,17 @@ cv::Mat fsiv_color_rescaling(const cv::Mat& in, const cv::Scalar& from, const cv
 {
     
     cv::Mat out, hist;
+    // 1. Transformamos la imagen de bgr a gray
+    cv::cvtColor(in, out, cv::COLOR_BGR2GRAY);
+    // 2. Calculamos el histograma de la imagen
     int histSize[]= {256}, canales[] = {0};
     float intensityRanges[] = {0, 256};
     const float* ranges[] = {intensityRanges};
-    
-    cv::cvtColor(in, out, cv::COLOR_BGR2GRAY); // imagen de salida en gray
-    
-    cv::calcHist(&out, 1, canales, cv::Mat(), hist, 1, histSize, ranges, true, false); // Calculate histogram
-    
-    cv::normalize(hist, hist, 1, 0, cv::NORM_L1, -1, cv::Mat()); // Normalize histogram
-    
-    out = fsiv_color_rescaling(in, cv::mean(in, out), cv::Scalar(255, 255, 255)); // Reescalar histograma
-    
+    cv::calcHist(&out, 1, canales, cv::Mat(), hist, 1, histSize, ranges, true, false);
+    // 3. Normalizamos el histograma
+    cv::normalize(hist, hist, 1, 0, cv::NORM_L1, -1, cv::Mat());
+    // 4. Reescalamos el color de la imagen
+    out = fsiv_color_rescaling(in, cv::mean(in, out), cv::Scalar(255, 255, 255));
     return out;
 }
 
@@ -523,7 +516,8 @@ cv::Mat fsiv_color_rescaling(const cv::Mat& in, const cv::Scalar& from, const cv
  cv::Mat fsiv_create_box_filter(const int r)
 {
     
-    cv::Mat ret_v = cv::Mat::ones(2*r+1, 2*r+1, CV_32F) / pow(2*r+1,2); // box filter
+    // 1. Generamos el box filter
+    cv::Mat ret_v = cv::Mat::ones(2*r+1, 2*r+1, CV_32F) / pow(2*r+1,2);
     return ret_v;
 }
 
@@ -541,20 +535,19 @@ cv::Mat fsiv_color_rescaling(const cv::Mat& in, const cv::Scalar& from, const cv
 {
     
     // Remenber 6*sigma is approx 99,73% of the distribution
-    // gaussiano = media(ret_v) = (1.0/(2.0*M_PI*pow(2*r+1/6.0,2)) * exp(-(pow(i-r,2)+pow(j-r,2))/(2.0*pow(2*r+1/6.0,2)))) / sumatorio(ret_v)
-
+    // 1. Aplicamos la formula gausiano: (1.0/(2.0*M_PI*pow(2*r+1/6.0,2)) * exp(-(pow(i-r,2)+pow(j-r,2))/(2.0*pow(2*r+1/6.0,2))))
     float size = 2*r+1, a= 1.0/(2.0*M_PI*pow(size/6.0,2));
 
     cv::Mat ret_v = cv::Mat(size, size, CV_32FC1);
-    
+        
     for (int i = 0; i < size; ++i) {
         for (int j = 0; j < size; ++j) {
             float b = -(pow(i-r,2)+pow(j-r,2))/(2.0*pow(size/6.0,2));
             ret_v.at<float>(i, j) = a * exp(b);
             }
         }
-
-    ret_v /= (cv::sum(ret_v)); // filtro gaussiano
+    // 2. Calculamos el filtro gausiano
+    ret_v /= (cv::sum(ret_v));
     return ret_v;
 }
 
@@ -575,13 +568,12 @@ cv::Mat fsiv_color_rescaling(const cv::Mat& in, const cv::Scalar& from, const cv
 {
     
     cv::Mat ret_v;
-
+    // 1.1. Opcion CV_32FC1
     if(in.type() == CV_32FC1) ret_v = cv::Mat::zeros(in.rows+2*r, in.cols+2*r, CV_32FC1);
-
+    // 1.2. Opcion CV_8UC1
     else ret_v = cv::Mat::zeros(in.rows+2*r, in.cols+2*r, CV_8UC1);
-
-    in.copyTo(ret_v(cv::Rect(r,r, in.cols, in.rows))); // expansion de la imagen original
-    
+     // 2. Expandimos la imagen
+    in.copyTo(ret_v(cv::Rect(r,r, in.cols, in.rows)));
     return ret_v;
 }
 
@@ -601,35 +593,24 @@ cv::Mat fsiv_color_rescaling(const cv::Mat& in, const cv::Scalar& from, const cv
  cv::Mat fsiv_circular_expansion(cv::Mat const& in, const int r)
 {
     
-    // imagen(x,y,w,h)
-    
-    
-    ret_v = fsiv_fill_expansion(in, r); // Expansion de la imagen original
-    
-    // Expansion del rectangulo superior de la imagen de entrada
+    // 1. Aplicamos una fill expansion de la imagen original
+    ret_v = fsiv_fill_expansion(in, r);
+    // 2. Expansion del rectangulo superior de la imagen de entrada
     in(cv::Rect(0,0,in.cols,r)).copyTo(ret_v(cv::Rect(r, in.rows+r, in.cols,r)));
-    
-    // Expansion del rectangulo inferior de la imagen de entrada
+    // 3. Expansion del rectangulo inferior de la imagen de entrada
     in(cv::Rect(0,in.rows-r,in.cols,r)).copyTo(ret_v(cv::Rect(r, 0, in.cols,r)));
-    
-    // Expansion del lado izquierdo de la imagen de entrada
+    // 4. Expansion del lado izquierdo de la imagen de entrada
     in(cv::Rect(0,0,r,in.rows)).copyTo(ret_v(cv::Rect(in.cols+r,r,r,in.rows)));
-    
-    // Expansion del lado derecho de la imagen de entrada
+    // 5. Expansion del lado derecho de la imagen de entrada
     in(cv::Rect(in.cols-r,0,r,in.rows)).copyTo(ret_v(cv::Rect(0,r,r,in.rows)));
-    
-    // Expansion de la esquina superior izquierda de la imagen de entrada
+    // 6. Expansion de la esquina superior izquierda de la imagen de entrada
     in(cv::Rect(0,0,r,r)).copyTo(ret_v(cv::Rect(in.cols+r,in.rows+r,r,r)));
-    
-    // Expansion de la esquina superior derecha de la imagen de entrada
+    // 7. Expansion de la esquina superior derecha de la imagen de entrada
     in(cv::Rect(in.cols-r,in.rows-r,r,r)).copyTo(ret_v(cv::Rect(0,0,r,r)));
-    
-    // Expansion de la esquina inferior izquierda de la imagen de entrada
+    // 8. Expansion de la esquina inferior izquierda de la imagen de entrada
     in(cv::Rect(in.cols-r,0,r,r)).copyTo(ret_v(cv::Rect(0,in.rows+r,r,r)));
-    
-    // Expansion de la esquina inferior derecha de la imagen de entrada
+    // 9. Expansion de la esquina inferior derecha de la imagen de entrada
     in(cv::Rect(0,in.rows-r,r,r)).copyTo(ret_v(cv::Rect(in.cols+r,0,r,r)));
-    
     return ret_v;
 }
 
@@ -648,14 +629,14 @@ cv::Mat fsiv_color_rescaling(const cv::Mat& in, const cv::Scalar& from, const cv
  cv::Mat fsiv_filter2D(cv::Mat const& in, cv::Mat const& filter)
 {
     
-    cv::Mat ret_v = cv::Mat::zeros((in.rows-2*(filter.rows/2)), (in.cols-2*(filter.cols/2)), CV_32FC1); // Imagen de salida
-    
+    // 1. Creamos una imagen vacia de salida
+    cv::Mat ret_v = cv::Mat::zeros((in.rows-2*(filter.rows/2)), (in.cols-2*(filter.cols/2)), CV_32FC1);
+    // 2. Aplicamos el filtro 2D a la imagen
     for (int i = 0; i < ret_v.rows; ++i) {
         for (int j = 0; j < ret_v.cols; ++j){
-            ret_v.at<float>(i,j) = sum(filter.mul(in(cv::Rect(j, i, filter.cols, filter.rows)))).val[0]; // Aplicamos el filtro 2D
+            ret_v.at<float>(i,j) = sum(filter.mul(in(cv::Rect(j, i, filter.cols, filter.rows)))).val[0];
         }
     }
-    
     return ret_v;
 }
 
@@ -677,32 +658,29 @@ cv::Mat fsiv_color_rescaling(const cv::Mat& in, const cv::Scalar& from, const cv
  cv::Mat fsiv_combine_images(const cv::Mat src1, const cv::Mat src2,double a, double b)
 {
     
-    cv::Mat ret_v = src1.mul(a) + src2.mul(b); // Suma ponderada de las imagenes src1 y src2
-    
+    // 1. Combinamos las imagenes aplicando la suma ponderada
+    cv::Mat ret_v = src1.mul(a) + src2.mul(b);
     return ret_v;
 }
 
 cv::Mat fsiv_usm_enhance(cv::Mat  const& in, double g, int r, int filter_type, bool circular, cv::Mat *unsharp_mask)
 {
     
-    //Hint: use your own functions fsiv_xxxx
-
     cv::Mat filtro, expansion;
-    
-    if(filter_type == 0) filtro = fsiv_create_box_filter(r); // box filter
-    
-    else filtro = fsiv_create_gaussian_filter(r); // filtro gaussiano
-        
-    if(!circular) expansion = fsiv_fill_expansion(in, r); // expansion no circular
-    
-    else expansion = fsiv_circular_expansion(in, r); // expansion circular
-    
-    cv::Mat filtro2D = fsiv_filter2D(expansion, filtro); // filtro 2D
-    
-    if(unsharp_mask) *unsharp_mask = filtro2D; // unsharp mask
-    
-    cv::Mat ret_v = fsiv_combine_images(in, filtro2D, 1+g, -g); // suma ponderada de las imagenes in y filtro2D
-
+    // 1.1. Opcion box filter -> Creamos el filtro box filter
+    if(filter_type == 0) filtro = fsiv_create_box_filter(r);
+    // 1.2 Opcion gaussiano -> Creamos el filtro gaussiano
+    else filtro = fsiv_create_gaussian_filter(r);
+    // 2.1. Opcion no circular -> Aplicamos fill expansion
+    if(!circular) expansion = fsiv_fill_expansion(in, r);
+    // 2.2. Opcion circular -> Aplicamos la expansion circular
+    else expansion = fsiv_circular_expansion(in, r);
+    // 3. Aplicamos el filtro 2D
+    cv::Mat filtro2D = fsiv_filter2D(expansion, filtro);
+    // 4. Opcion unshar mask -> Aplicamos unsharp mask
+    if(unsharp_mask) *unsharp_mask = filtro2D;
+    // 5. Combinamos las imagenes
+    cv::Mat ret_v = fsiv_combine_images(in, filtro2D, 1+g, -g);
     return ret_v;
 }
 
@@ -725,14 +703,25 @@ cv::Mat fsiv_usm_enhance(cv::Mat  const& in, double g, int r, int filter_type, b
     
     cv::Mat out;
      
-    // Fill expansion
-    if(ext_type == 0) cv::copyMakeBorder(img,out,(new_size.height-img.rows)/2,(new_size.height-img.rows)/2
-                        ,(new_size.height-img.rows)/2,(new_size.height-img.rows)/2,cv::BORDER_CONSTANT);
+    // 1.1. Opcion Fill expansion -> Aplicamos fill expansion
+    if(ext_type == 0) cv::copyMakeBorder(
+                                             img,
+                                             out,
+                                             (new_size.height-img.rows)/2,
+                                             (new_size.height-img.rows)/2,
+                                             (new_size.height-img.rows)/2,
+                                             (new_size.height-img.rows)/2,
+                                             cv::BORDER_CONSTANT);
 
-    // Expansion circular
-    else cv::copyMakeBorder(img,out,(new_size.height-img.rows)/2,(new_size.height-img.rows)/2,
-                            (new_size.height-img.rows)/2,(new_size.height-img.rows)/2,cv::BORDER_WRAP);
-    
+    // 1.2. Opcion circular -> Aplicamos expansion circular
+    else cv::copyMakeBorder(
+                              img,
+                              out,
+                              (new_size.height-img.rows)/2,
+                              (new_size.height-img.rows)/2,
+                              (new_size.height-img.rows)/2,
+                              (new_size.height-img.rows)/2,
+                              cv::BORDER_WRAP);
     return out;
 }
 
@@ -750,26 +739,30 @@ cv::Mat fsiv_usm_enhance(cv::Mat  const& in, double g, int r, int filter_type, b
 {
     
     //Hint: use fsiv_extend_image() to extent G[r1].
-    
-    cv::Mat filter = cv::Mat::zeros(3, 3, CV_32FC1); // Matriz de filtro
-
-    if(filter_type==0){ // [0, -1, 0; -1, 5, -1; 0, -1, 0]
+    // 1. Creamos la matriz del filtro
+    cv::Mat filter = cv::Mat::zeros(3, 3, CV_32FC1);
+    // 2.1. Diseñamos un filtro lap4 -> [0, -1, 0; -1, 5, -1; 0, -1, 0]
+    if(filter_type==0){
         filter.at<float>(0,1) = -1; 
         filter.at<float>(1,0) = -1, filter.at<float>(1,1) = 5, filter.at<float>(1,2) = -1;
         filter.at<float>(2,1) = -1;
     }
-
-    else if(filter_type==1){ // [-1, -1, -1; -1, 9, -1; -1, -1, -1]
+    // 2.2. Diseñamos un filtro lap8 -> [-1, -1, -1; -1, 9, -1; -1, -1, -1]
+    else if(filter_type==1){
         filter.at<float>(0,0) = -1, filter.at<float>(0,1) = -1, filter.at<float>(0,2) = -1;
         filter.at<float>(1,0) = -1, filter.at<float>(1,1) = 9,  filter.at<float>(1,2) = -1;
         filter.at<float>(2,0) = -1, filter.at<float>(2,1) = -1, filter.at<float>(2,2) = -1;
     }
-
-    else{ // DoG = G[r2]-G[r1]        
+    // 2.3. Aplicamos giltro DOG -> G[r2]-G[r1]
+    else{
+        3. Creamos los filtros gaussianos 
         cv::Mat g1 = fsiv_create_gaussian_filter(r1), g2 = fsiv_create_gaussian_filter(r2);        
-        g1 = fsiv_extend_image(g1, g2.size(),0); // Extender G[r1] a G[r2]        
-        filter = g1-g2; // filtro = G[r2]-G[r1]        
-        filter.at<float>(g2.rows/2, g2.cols/2) += 1; // Añadir 1 a la posición central        
+        // 4. Extendemos la imagen del filtro g1 a g2
+        g1 = fsiv_extend_image(g1, g2.size(),0);
+        // 5. Obtenemos el filtro DOG
+        filter = g1-g2;
+        // 6. Añadimos el valor 1 a la posicion central del filtro
+        filter.at<float>(g2.rows/2, g2.cols/2) += 1;
     }
     return filter;
 }
@@ -788,46 +781,61 @@ cv::Mat fsiv_usm_enhance(cv::Mat  const& in, double g, int r, int filter_type, b
  
  cv::Mat fsiv_image_sharpening(const cv::Mat& in, int filter_type, bool only_luma, int r1, int r2, bool circular)
 {
-    
+                
      //Hint: use cv::filter2D.
      //Remenber: if circular, first the input image must be circular extended, and then clip the result.
      cv::Mat out;
-    
-     cv::Mat filter = fsiv_create_sharpening_filter(filter_type, r1, r2); // Crear el filtro
-
-     cv::Size new_size (in.cols+(2*r2), in.rows+(2*r2)); // Tamaño de la imagen extendida
-    
-     if(only_luma && in.channels() == 3){ // Canal luma
-        cv::Mat hsv = in.clone();
-        std::vector<cv::Mat> canales;
-        cv::cvtColor(hsv, hsv, cv::COLOR_BGR2HSV); // Convertir a HSV
-        cv::split(hsv, canales); // Separar canales
-        
-        if(circular){ // Expansion circular de la imagen
-            cv::Mat circ = fsiv_extend_image(canales[2], new_size, 1); // Extender la imagen circularmente
-            cv::filter2D(circ, circ, -1, filter); // Aplicar el filtro
-            circ = circ(cv::Rect(r2, r2, in.cols, in.rows)); // Recortar la imagen
-            circ.copyTo(canales[2]); // Copiar la imagen recortada al canal luma
-        }
-
-        else{ // Expansion de la imagen rellenando con 1
-            cv::Mat ext = fsiv_extend_image(canales[2], new_size, 0); // Extender la imagen
-            cv::filter2D(ext, ext, -1, filter); // Aplicar el filtro
-            ext = ext(cv::Rect(r2, r2, in.cols, in.rows)); // Recortar la imagen
-            ext.copyTo(canales[2]); // Copiar la imagen recortada al canal luma
-        }
-        cv::merge(canales, hsv); // Fusionar los canales
-        cv::cvtColor(hsv, out, cv::COLOR_HSV2BGR); // Convertir a BGR
-    }
-
-    else{ // Sin canal luma
+     // 1. Creamos el filtro sharpening    
+     cv::Mat filter = fsiv_create_sharpening_filter(filter_type, r1, r2);
+     // 2. Obtenemos el tamaño de la imagen extendida
+     cv::Size new_size (in.cols+(2*r2), in.rows+(2*r2));
+     // 3.1. Opcion luma
+     if(only_luma && in.channels() == 3){ 
+          cv::Mat hsv = in.clone();
+          // 4. Convertimos la imagen de BGR a HSV
+          cv::cvtColor(hsv, hsv, cv::COLOR_BGR2HSV);
+          // 5. Separamos la imagen en canales
+          std::vector<cv::Mat> canales;
+          cv::split(hsv, canales);
+          // 6.1. Opcion circular
+          if(circular){
+               // 7. Extension circular de la imagen
+               cv::Mat circ = fsiv_extend_image(canales[2], new_size, 1);
+               // 8. Aplicamos el filtro 2D
+               cv::filter2D(circ, circ, -1, filter);
+               // 9. Recortamos la imagen
+               circ = circ(cv::Rect(r2, r2, in.cols, in.rows));
+               // 10. Copiamos la imagen recortada en el canal luma
+               circ.copyTo(canales[2]); // Copiar la imagen recortada al canal luma
+          }
+          // 6.2. Opcion fill expansion
+          else{
+               // 7. Aplicamos fill expansion
+               cv::Mat ext = fsiv_extend_image(canales[2], new_size, 0);
+               // 8. Aplicamos el filtro 2D
+               cv::filter2D(ext, ext, -1, filter);
+               // 9. Recortamos la imagen
+               ext = ext(cv::Rect(r2, r2, in.cols, in.rows));
+               // 10. Aplicamos el procesamiento al canal luma
+               ext.copyTo(canales[2]);
+          }
+          // 7. Unimos los canales
+          cv::merge(canales, hsv);
+          // 8. Transformamos la imagen de hsv a bgr
+          cv::cvtColor(hsv, out, cv::COLOR_HSV2BGR);
+     }
+    // 3.2. Opcion no cluma
+    else{
         cv::Mat img, extended;
-        if(circular) extended = fsiv_extend_image(in,new_size,1); // expansion circular
-        else extended = fsiv_extend_image(in,new_size,0); // expansion con 1
-        cv::filter2D(extended, out, -1, filter); // aplicar el filtro
-        out = out(cv::Rect(r2,r2,in.cols,in.rows)); // recortar la imagen
+        // 4.1. Expansion circular
+        if(circular) extended = fsiv_extend_image(in,new_size,1);
+        // 4.2. fill expansion
+        else extended = fsiv_extend_image(in,new_size,0);
+        // 5. Aplicamos el filtro 2D
+        cv::filter2D(extended, out, -1, filter);
+        // 6. Recortamos la imagen
+        out = out(cv::Rect(r2,r2,in.cols,in.rows));
     }
-
     return out;
 }
 
@@ -843,9 +851,9 @@ cv::Mat fsiv_usm_enhance(cv::Mat  const& in, double g, int r, int filter_type, b
  
 std::vector<cv::Point3f> fsiv_generate_3d_calibration_points(const cv::Size& board_size, float square_size)
 {
- 
+     
+    // 1. Obtenemos los puntos de calibracion 3D -> the first inner point has (1,1) in board coordinates.
     std::vector<cv::Point3f> ret_v;
-    //Remenber: the first inner point has (1,1) in board coordinates.
     for(int i=1; i <= board_size.height; i++){
         for(int j=1; j<= board_size.width; j++){
             ret_v.push_back(cv::Point3f(j*square_size,i*square_size, 0)); // puntos de calibracion 3D
@@ -865,23 +873,27 @@ std::vector<cv::Point3f> fsiv_generate_3d_calibration_points(const cv::Size& boa
  * @warning A keyboard press is waited when the image is shown to continue.
  */
  
- bool fsiv_find_chessboard_corners(const cv::Mat& img, const cv::Size &board_size,std::vector<cv::Point2f>& corner_points,const char * wname)
+bool fsiv_find_chessboard_corners(const cv::Mat& img, const cv::Size &board_size,
+                                        std::vector<cv::Point2f>& corner_points,const char * wname)
 {
     
-    bool was_found = cv::findChessboardCorners(img,board_size,corner_points); // Buscamos las esquinas del tablero
-
-    if(was_found){ // Esquinas encontradas
-        cv::Mat grey = img.clone(); // Clonamos la imagen
-        cv::cvtColor(grey, grey, cv::COLOR_BGR2GRAY); // Convertimos la imagen a escala de grises
-        // Mejoramos la localizacion de las esquinas
+    // 1. Buscamos las esquinas del tablero
+    bool was_found = cv::findChessboardCorners(img,board_size,corner_points);
+    // Opcion. esquinas encontradas
+    if(was_found){
+        cv::Mat grey = img.clone();
+        // 2. Convertimos la imagen de bgr a gray
+        cv::cvtColor(grey, grey, cv::COLOR_BGR2GRAY);
+        // 3. Mejoramos la localizacion de las esquinas
         cv::cornerSubPix(grey, corner_points, cv::Size(5, 5), cv::Size(-1, -1), cv::TermCriteria()); 
     }
-    
-    if(wname){ // Fichero de salida
-        cv::drawChessboardCorners(img, board_size, corner_points, was_found); // Dibujamos las esquinas del tablero
-        cv::imshow(wname, img); // Mostramos la imagen
+    // Opcion. Fichero de salida
+    if(wname){
+        // 2. Dibujamos las esquinas del tablero
+        cv::drawChessboardCorners(img, board_size, corner_points, was_found);
+        // 3. Mostramos la imagen
+        cv::imshow(wname, img);
     }
-
     return was_found;
 }
 
@@ -903,15 +915,15 @@ std::vector<cv::Point3f> fsiv_generate_3d_calibration_points(const cv::Size& boa
 {
 
     float error=0.0;
-    std::vector<cv::Mat> rvecs_, tvecs_;
-    // Si los vectores de rotacion y traslacion no son nulos -> Obtenemos el error al calibrar la imagen
+    // Opcion. Faltan los parametros de la camara -> Calculamos el error de calibracion
     if( (rvecs != nullptr) && (tvecs != nullptr))
         error = cv::calibrateCamera(_3d_points, _2d_points, camera_size, camera_matrix, dist_coeffs, *rvecs, *tvecs);
     
-    // Si los vectores de rotacion y traslacion son nulos -> Obtenemos el error al calibrar la imagen
-    else
+    // Opcion. Se han indicado los parametros de la camara -> Calculamos el error de calibracion
+    else{
+        std::vector<cv::Mat> rvecs_, tvecs_;
         error = cv::calibrateCamera(_3d_points, _2d_points, camera_size, camera_matrix, dist_coeffs, rvecs_, tvecs_);
-
+    }
     return error;
 }
 
@@ -931,16 +943,17 @@ void fsiv_draw_axes(cv::Mat& img, const cv::Mat& camera_matrix, const cv::Mat& d
                const cv::Mat& rvec, const cv::Mat& tvec,const float size, const int line_width)
 {
     
-    std::vector<cv::Point3f> points3d;
+    // 1. Obtenemos los puntos 3D
+    std::vector<cv::Point3f> points3d = { 
+                                          cv::Point3f(0,0,0),   
+                                          cv::Point3f(size, 0, 0), 
+                                          cv::Point3f(0, size, 0), 
+                                          cv::Point3f(0, 0, -size)
+                                          };
+    // 2. Proyectamos los puntos 3d
     std::vector<cv::Point2f> points2d;
-    // Obtenemos los puntos 3D
-    cv::Point3f p0(0, 0, 0), p1(size, 0, 0), p2(0, size, 0), p3(0, 0, -size);
-    points3d.push_back(p0);
-    points3d.push_back(p1);
-    points3d.push_back(p2);
-    points3d.push_back(p3);
     cv::projectPoints(points3d, rvec, tvec, camera_matrix, dist_coeffs, points2d); // Realizamos la proyección de los puntos 3D
-    // Obtenemos la linea de puntos 2D
+    // 3. Obtenemos la linea de puntos 2D
     cv::line(img, points2d[0], points2d[1], cv::Scalar(0, 0, 255), line_width);
     cv::line(img, points2d[0], points2d[2], cv::Scalar(0, 255, 0), line_width);
     cv::line(img, points2d[0], points2d[3], cv::Scalar(255, 0, 0), line_width);
@@ -975,6 +988,7 @@ void fsiv_draw_axes(cv::Mat& img, const cv::Mat& camera_matrix, const cv::Mat& d
                                 const cv::Mat& dist_coeffs,const cv::Mat& rvec,const cv::Mat& tvec)
 {
     
+    // 1. Guardamos en el fichero los parametros de calibracion de la camara
     fs.write("image-width", camera_size.width);
     fs.write("image-height", camera_size.height);
     fs.write("error", error);
@@ -1000,6 +1014,7 @@ void fsiv_compute_camera_pose(const std::vector<cv::Point3f> &_3dpoints,const st
                               const cv::Mat& camera_matrix,const cv::Mat& dist_coeffs,cv::Mat& rvec,cv::Mat& tvec)
 {
 
+    // 1. Pose de la camara
     cv::solvePnP(_3dpoints, _2dpoints, camera_matrix, dist_coeffs, rvec, tvec);
 }
 
@@ -1030,6 +1045,7 @@ void fsiv_load_calibration_parameters(cv::FileStorage &fs,cv::Size &camera_size,
                                  float& error,cv::Mat& camera_matrix,cv::Mat& dist_coeffs,cv::Mat& rvec,cv::Mat& tvec)
 {
     
+    // 1. Cargamos los parametros de calibracion de la camara
     fs["image-width"] >> camera_size.width;
     fs["image-height"] >> camera_size.height;
     fs["error"] >> error;
@@ -1051,7 +1067,7 @@ void fsiv_load_calibration_parameters(cv::FileStorage &fs,cv::Size &camera_size,
 void fsiv_undistort_image(const cv::Mat& input, cv::Mat& output,const cv::Mat& camera_matrix,const cv::Mat& dist_coeffs)
 {
     
-    //Hint: use cv::undistort.
+    //1. Corregimos la distorsion de la lente de la camara -> Hint: use cv::undistort.
     cv::undistort(input, output, camera_matrix, dist_coeffs);   
 }
 
@@ -1081,33 +1097,23 @@ void fsiv_undistort_video_stream(cv::VideoCapture&input_stream,cv::VideoWriter& 
     // and then only remap (cv::remap) the input frame with the computed maps.
     
     cv::Mat frame_in, frame_out, map1, map2;
-
-    double retard = 1000/fps; // Retardo 
     
-    // Obtenemos el tamaño de la imagen
+    // 1. Obtenemos el tamaño de la imagen
     cv::Size size = cv::Size(input_stream.get(cv::CAP_PROP_FRAME_WIDTH), input_stream.get(cv::CAP_PROP_FRAME_HEIGHT));
-    
-    // Obtenemos la matriz de transformación    
+    // 2. Obtenemos la matriz de transformación    
     cv::initUndistortRectifyMap(camera_matrix, dist_coeffs, cv::Mat(), camera_matrix, size, CV_32FC1, map1, map2);
-    
-    input_stream >> frame_in; // Obtenemos la primera imagen
-    
-
+    // 3. Frame de entrada
+    input_stream >> frame_in;
+    // 4. Iniciamos el frame
     while(!frame_in.empty()){
-
+        double retard = 1000/fps;
         cv::remap(frame_in, frame_out, map1, map2, interp);
-
         output_stream.write(frame_out);
-
         cv::imshow(input_wname, frame_in); 
-            
         cv::imshow(output_wname, frame_out);
-
         cv::waitKey(retard);
-        
         input_stream >> frame_in;
     }
-
 }
 
 # bcksegm
@@ -1123,8 +1129,10 @@ void fsiv_undistort_video_stream(cv::VideoCapture&input_stream,cv::VideoWriter& 
  void fsiv_remove_segmentation_noise(cv::Mat & img, int r)
 {
     
+    // 1. Obtenemos la estructura
     cv::Size tam(2*r+1,2*r+1);
     cv::Mat structuringElement = cv::getStructuringElement(cv::MORPH_RECT, tam);
+    // 2. Removemos la segmentacion del ruido -> Primero cerramos y luego abrimos
     cv::Mat dst;
     cv::morphologyEx(img, dst, cv::MORPH_CLOSE, structuringElement);
     cv::morphologyEx(dst, img, cv::MORPH_OPEN, structuringElement);
@@ -1142,18 +1150,18 @@ void fsiv_undistort_video_stream(cv::VideoCapture&input_stream,cv::VideoWriter& 
  void fsiv_segm_by_dif(const cv::Mat & prevFrame, const cv::Mat & curFrame,cv::Mat & difimg, int thr, int r)
 {
 
-    // Imagenes en escala de grises
+    // 1. Imagenes en escala de grises
     cv::Mat previous, cursor;
     cv::cvtColor(prevFrame, previous, cv::COLOR_BGR2GRAY);
     cv::cvtColor(curFrame, cursor, cv::COLOR_BGR2GRAY);
-    
-    cv::Mat zeros = cv::Mat::zeros(prevFrame.size(), prevFrame.type()); // Generamos la imagen
-    
-    cv::absdiff(previous, cursor, zeros);  // Diferencia absoluta entre los cursores
-    
-    difimg = zeros >= thr; // Comparamos con thr
-    
-    if(r > 0) fsiv_remove_segmentation_noise(difimg, r); // Eliminamos el ruido
+    // 2. Generamos la imagen vacia
+    cv::Mat zeros = cv::Mat::zeros(prevFrame.size(), prevFrame.type());
+    // 3. Diferencia absoluta entre los cursores
+    cv::absdiff(previous, cursor, zeros); 
+    // 4. Comparamos con thr
+    difimg = zeros >= thr;
+    // 5. Eliminamos el ruido
+    if(r > 0) fsiv_remove_segmentation_noise(difimg, r);
 }
 
 /**
@@ -1167,16 +1175,18 @@ void fsiv_undistort_video_stream(cv::VideoCapture&input_stream,cv::VideoWriter& 
 {
 
     cv::Mat masked;
-    
+    // 1.1. Imagen con 3 canales -> mascara de escala de gray a bgr
     if(frame.channels()==3) // Frame tiene 3 canales
     {
-        masked = cv::Mat::zeros(frame.size(), CV_8UC1); // Creamos la mascara
-        cv::cvtColor(mask, masked, cv::COLOR_GRAY2BGR); // Mascara en BGR
+        // 2. Generamos la mascara vacia
+        masked = cv::Mat::zeros(frame.size(), CV_8UC1);
+        // 3. Transformamos la mascara de gray a bgr
+        cv::cvtColor(mask, masked, cv::COLOR_GRAY2BGR);
     }
-    
-    else masked = mask; // Frame no tiene 3 canales
-    
-    outframe = frame & masked; // Aplicamos la mascara
+    // 1.2. Imagen no tiene 3 canales
+    else masked = mask;
+    // 2. Aplicamos la mascara
+    outframe = frame & masked;
 }
 
 /**
@@ -1195,40 +1205,41 @@ void fsiv_undistort_video_stream(cv::VideoCapture&input_stream,cv::VideoWriter& 
     
     bool was_ok = true;
     // Remenber you can compute the variance as: varI = sum_n{I^2}/n - meanI²
-    // Hint: convert to input frames to float [0,1].
-    // Hint: use cv::accumulate() and cv::accumulateSquare().
-    
+    // Hint: convert to input frames to float [0,1]. use cv::accumulate() and cv::accumulateSquare().
     cv::Mat frame;
     int key=0, i=0, size=2*gauss_r+1;
-
-    while(was_ok && key!=27 && i < num_frames) // Mientras no se pulse ESC o se alcance el numero de frames
+    // 1. Esperamos a pulsar ESC o alcancer el numero de frames
+    while(was_ok && key!=27 && i < num_frames)
     {
-        was_ok=input.read(frame); // Leemos el frame
-
-        if(was_ok) // Frame leido correctamente
+        // 2. Leemos el frame
+        was_ok=input.read(frame);
+        // 3.1. Frame leido correctamente
+        if(was_ok)
         {
-            frame.convertTo(frame, CV_32F, 1/255.0); // Frame de tipo flotante [0,1]
-            if(gauss_r>0) cv::GaussianBlur(frame, frame, cv::Size(size, size), 0.0); // Filtro Gaussiano
-
-            // Calculamos la media y varianza
+            // 4. Frame con valores flotantes
+            frame.convertTo(frame, CV_32F, 1/255.0);
+            // 5.1. Aplicamos un filtro gaussiano
+            if(gauss_r>0) cv::GaussianBlur(frame, frame, cv::Size(size, size), 0.0);
+            // 6.1. Media y varianza vacia -> Calculamos la media y la varianza
             if(mean.empty() || variance.empty())
             {
-                mean=frame.clone(); // Clonamos el frame
+                mean=frame.clone();
                 variance=frame.mul(frame);
             }
-
+            // 6.2. Media y varianza no vacias -> Calculamos la media y la varianza
             else
             {
                 cv::accumulate(frame, mean);
                 cv::accumulateSquare(frame, variance);
             }
-
-            i++; // Incrementamos i
-            if(wname) cv::imshow(wname, frame); // Mostramos la imagen
+            // 7. Incrementamos i
+            i++;
+            // 8. Mostramos la imagen
+            if(wname) cv::imshow(wname, frame);
         }
     }
-
-    if(was_ok) // Calculamos la media y la varianza
+    // 9. Calculamos la media y la varianza
+    if(was_ok)
     {   
         mean = mean.mul(1.0/i);
         variance=variance.mul(1.0/i) - mean.mul(mean);
@@ -1253,18 +1264,18 @@ void fsiv_undistort_video_stream(cv::VideoCapture&input_stream,cv::VideoWriter& 
     //Remenber: a point belongs to the foreground (255) if |mean-I| >= k*stdev
     cv::Mat diff, sqrt;
     cv::absdiff(frame, mean, diff);
-    // Obtenemos la desviacion tipica
+    // 1. Obtenemos la desviacion tipica
     cv::sqrt(variance, sqrt);
     sqrt*=k;
-    // Mascara
+    // 2. Mascara
     cv::Mat masked = diff >= sqrt;
-    // Dividimos la mascara en canales
+    // 3. Dividimos la mascara en canales
     std::vector<cv::Mat> vector;
     cv::split(masked, vector);
-    // Disyuncion entre los elementos del vector de canales
+    // 4. Disyuncion entre los elementos del vector de canales
     cv::bitwise_or(vector[0], vector[1], mask);
     cv::bitwise_or(mask, vector[2], mask);
-    // Si el radio es positivo, eliminamos el ruido de segmentacion
+    // 5. Si el radio es positivo, eliminamos el ruido de segmentacion
     if(r>0) fsiv_remove_segmentation_noise(mask, r);
 }
 
@@ -1290,19 +1301,19 @@ void fsiv_undistort_video_stream(cv::VideoCapture&input_stream,cv::VideoWriter& 
     //Hint: a period is met when (idx % period) == 0
     //Hint: use accumulateWeighted to update the model.
 
-    // Matriz negativa de la mascara
+    // 1. Matriz negativa de la mascara
     cv::Mat negative;
     cv::bitwise_not(mask, negative);
     
-    // short term updating
+    // 2. short term updating
     if(short_term_update_period > 0 && frame_count % short_term_update_period == 0){
-        // computes a running average of the frames
+        // 3. computes a running average of the frames
         cv::accumulateWeighted(frame, mean, alpha, negative);
         cv::accumulateWeighted(frame.mul(frame), variance, alpha, negative);
     }
     
     else if(long_term_update_period > 0 && frame_count % long_term_update_period == 0){
-        // computes a running average of the frames
+        // 4. computes a running average of the frames
         cv::accumulateWeighted(frame, mean, alpha);
         cv::accumulateWeighted(frame.mul(frame), variance, alpha);
     }
@@ -1325,15 +1336,15 @@ void fsiv_undistort_video_stream(cv::VideoCapture&input_stream,cv::VideoWriter& 
                    const cv::Mat& rvec, const cv::Mat& tvec,const float size)
 {
     
-    // Vector de puntos 3D
+    // 1. Vector de puntos 3D
     std::vector<cv::Point3f> _3d_points = {
         cv::Point3f(0,0,0), cv::Point3f(size,0,0), cv::Point3f(0,size,0), cv::Point3f(size,size,0), 
         cv::Point3f(size/2,size/2,-size/2)};
-    // Vector de puntos 2D
+    // 2. Vector de puntos 2D
     std::vector<cv::Point2f> _2d_points(_3d_points.size());
-    // Proyectamos los puntos
+    // 3. Proyectamos los puntos 3D
     cv::projectPoints(_3d_points, rvec, tvec, M, dist_coeffs, _2d_points);
-    // Unimos los puntos
+    // 4. Unimos los puntos 2D
     cv::line(img, _2d_points[0], _2d_points[1], cv::Scalar(0, 0, 255), 3);
     cv::line(img, _2d_points[1], _2d_points[3], cv::Scalar(0, 255, 0), 3);
     cv::line(img, _2d_points[3], _2d_points[2], cv::Scalar(255, 0, 0), 3);
@@ -1355,18 +1366,13 @@ void fsiv_undistort_video_stream(cv::VideoCapture&input_stream,cv::VideoWriter& 
  * @pre output.type()==CV_8UC3.
  */
  
- void
-fsiv_project_image(const cv::Mat& input, cv::Mat& output,
-                   const cv::Size& board_size,
+ void fsiv_project_image(const cv::Mat& input, cv::Mat& output,const cv::Size& board_size,
                    const std::vector<cv::Point2f>& _2dpoints)
 {
-    CV_Assert(!input.empty() && input.type()==CV_8UC3);
-    CV_Assert(!output.empty() && output.type()==CV_8UC3);
-    CV_Assert(board_size.area()==_2dpoints.size());
-    //TODO
-    // Creamos la máscara
+    
+    // 1. Creamos la máscara
     cv::Mat mask = cv::Mat::zeros(output.rows, output.cols, CV_8UC1);
-    // Esquinas del tablero
+    // 2. Esquinas del tablero
     std::vector<cv::Point2f> _2dpoints_ = {
                _2dpoints[0], 
                _2dpoints[board_size.width-1], 
@@ -1374,9 +1380,9 @@ fsiv_project_image(const cv::Mat& input, cv::Mat& output,
                _2dpoints[(board_size.height-1) * board_size.width]
     };
     std::vector<cv::Point> corners = {_2dpoints_[0], _2dpoints_[1], _2dpoints_[2], _2dpoints_[3]};
-    // Rellenamos la máscara
+    // 3. Rellenamos la máscara
     cv::fillConvexPoly(mask, corners, cv::Scalar(255, 255, 255));
-    // Transformación de perspectiva
+    // 4. Obtenemos la transformación de perspectiva
     std::vector<cv::Point2f> _2dpoints_i = {
                cv::Point2f(0, 0), 
                cv::Point2f(input.cols-1, 0), 
@@ -1384,10 +1390,10 @@ fsiv_project_image(const cv::Mat& input, cv::Mat& output,
                cv::Point2f(0, input.rows-1)
     };
     cv::Mat transform = cv::getPerspectiveTransform(_2dpoints_i, _2dpoints_);
-    // Aplicamos la transformación
+    // 5. Aplicamos la transformación de perspectiva
     cv::Mat out = cv::Mat::zeros(output.rows, output.cols, CV_8UC1);
     cv::warpPerspective(input, out, transform, output.size());
-    // Copiamos la imagen
+    // 6. Copiamos la imagen
     out.copyTo(output, mask);
 }
  
@@ -1400,20 +1406,14 @@ fsiv_project_image(const cv::Mat& input, cv::Mat& output,
  * @return an instance of the classifier.
  */
  
- cv::Ptr<cv::ml::StatModel>
-fsiv_create_knn_classifier(int K)
+ cv::Ptr<cv::ml::StatModel> fsiv_create_knn_classifier(int K)
 {
+    
     cv::Ptr<cv::ml::KNearest> knn;
-
-    // TODO: Create an KNN classifier.
-    // Hint: Set algorithm type to BRUTE_FORCE.
-    // Hint: Set it as a classifier (setIsClassifier)
-    // Remenber: Set hyperparameter K.
+    // 1. Creamos el KNN
     knn = cv::ml::KNearest::create();
+    // 2. Parametro por defecto KNN
     knn->setDefaultK(K);
-    //
-
-    CV_Assert(knn != nullptr);
     return knn;
 }
 
@@ -1427,23 +1427,17 @@ fsiv_create_knn_classifier(int K)
  * @return an instance of the classifier
  */
  
- cv::Ptr<cv::ml::StatModel>
-fsiv_create_svm_classifier(int Kernel,
-                           double C,
-                           double degree,
-                           double gamma)
+ cv::Ptr<cv::ml::StatModel> fsiv_create_svm_classifier(int Kernel,double C,double degree,double gamma)
 {
+    
+    // 1. Creamos el algoritmo svm
     cv::Ptr<cv::ml::SVM> svm;
-    // TODO: Create an SVM classifier.
-    // Set algorithm type to C_SVC.
-    // Set hyperparameters: Kernel, C, Gamma, Degree.
     svm = cv::ml::SVM::create();
+    // 2. Introducimos los parametros svm
     svm->setKernel(Kernel);
     svm->setC(C);
     svm->setDegree(degree);
     svm->setGamma(gamma);
-    //
-    CV_Assert(svm != nullptr);
     return svm;
 }
 
@@ -1456,22 +1450,15 @@ fsiv_create_svm_classifier(int Kernel,
  * @return an instance of the classifier
  */
  
- cv::Ptr<cv::ml::StatModel>
-fsiv_create_rtrees_classifier(int V,
-                              int T,
-                              double E)
+ cv::Ptr<cv::ml::StatModel> fsiv_create_rtrees_classifier(int V,int T,double E)
 {
+    
+    // 1. Creamos el arbol de decision
     cv::Ptr<cv::ml::RTrees> rtrees;
-    // TODO: Create an RTrees classifier.
-    // Set hyperparameters: Number of features used per node (ActiveVarCount),
-    //  max num of trees, and required OOB error.
-    // Remenber:: to set T and E parameters use a cv::TerminCriteria object
-    //    where T is the max iterations and E is the epsilon.
     rtrees = cv::ml::RTrees::create();
+    // 2. Introducimos los parametros del arbol de decision
     rtrees->setActiveVarCount(V);
     rtrees->setTermCriteria(cv::TermCriteria(cv::TermCriteria::MAX_ITER + cv::TermCriteria::EPS, T, E));
-    //
-    CV_Assert(rtrees != nullptr);
     return rtrees;
 }
 
@@ -1486,19 +1473,13 @@ fsiv_create_rtrees_classifier(int V,
  * @post clfs->isTrained()
  */
  
- void fsiv_train_classifier(cv::Ptr<cv::ml::StatModel> &clsf,
-                           const cv::Mat &samples, const cv::Mat &labels,
-                           int flags)
+ void fsiv_train_classifier(cv::Ptr<cv::ml::StatModel> &clsf,const cv::Mat &samples, const cv::Mat &labels,int flags)
 {
-    CV_Assert(clsf != nullptr);
-
-    // TODO: train the classifier.
-    // Hint: you can use v::ml::TrainData to set the parameters.
-    // Remenber: we are using ROW_SAMPLE ordering in the dataset.
+    
+    // 1. Obtenemos los datos de entrenamiento
     cv::Ptr<cv::ml::TrainData> data =  cv::ml::TrainData::create(samples,cv::ml::ROW_SAMPLE, labels);
+    // 2. Entrenamos el clasificador
     clsf->train(cv::ml::TrainData::create(samples,cv::ml::ROW_SAMPLE, labels));
-    //
-    CV_Assert(clsf->isTrained());
 }
 
 /**
@@ -1512,18 +1493,13 @@ fsiv_create_rtrees_classifier(int V,
  * @post predictions.rows == samples.rows.
  */
  
- void fsiv_make_predictions(cv::Ptr<cv::ml::StatModel> &clsf,
-                           const cv::Mat &samples, cv::Mat &predictions)
+ void fsiv_make_predictions(cv::Ptr<cv::ml::StatModel> &clsf,const cv::Mat &samples, cv::Mat &predictions)
 {
-    CV_Assert(clsf != nullptr);
-    CV_Assert(clsf->isTrained());
-    // TODO: do the predictions.
-    // Remenber: the classefied used float to save the labels.
+    
+    // 1. Predicciones del clasificador
     clsf->predict(samples, predictions);
+    // 2. Transformamos las predicciones a CV_32S
     predictions.convertTo(predictions, CV_32S);
-    //
-    CV_Assert(predictions.depth() == CV_32S);
-    CV_Assert(predictions.rows == samples.rows);
 }
 
 /**
@@ -1534,17 +1510,11 @@ fsiv_create_rtrees_classifier(int V,
  * @post ret_v != nullptr
  */
  
- cv::Ptr<cv::ml::StatModel>
-fsiv_load_knn_classifier_model(const std::string &model_fname)
+ cv::Ptr<cv::ml::StatModel> fsiv_load_knn_classifier_model(const std::string &model_fname)
 {
-    cv::Ptr<cv::ml::StatModel> clsf;
-
-    // TODO: load a KNN classifier.
-    // Hint: use the generic interface cv::Algorithm::load< classifier_type >
-    clsf = cv::Algorithm::load<cv::ml::KNearest>(model_fname);
-    //
-
-    CV_Assert(clsf != nullptr);
+    
+    // 1. Leemos los datos del clasificador knn 
+    cv::Ptr<cv::ml::StatModel> clsf = cv::Algorithm::load<cv::ml::KNearest>(model_fname);
     return clsf;
 }
 
