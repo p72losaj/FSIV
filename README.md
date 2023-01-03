@@ -1409,9 +1409,8 @@ void fsiv_undistort_video_stream(cv::VideoCapture&input_stream,cv::VideoWriter& 
  cv::Ptr<cv::ml::StatModel> fsiv_create_knn_classifier(int K)
 {
     
-    cv::Ptr<cv::ml::KNearest> knn;
     // 1. Creamos el KNN
-    knn = cv::ml::KNearest::create();
+    cv::Ptr<cv::ml::KNearest> knn = cv::ml::KNearest::create();
     // 2. Parametro por defecto KNN
     knn->setDefaultK(K);
     return knn;
@@ -1431,8 +1430,7 @@ void fsiv_undistort_video_stream(cv::VideoCapture&input_stream,cv::VideoWriter& 
 {
     
     // 1. Creamos el algoritmo svm
-    cv::Ptr<cv::ml::SVM> svm;
-    svm = cv::ml::SVM::create();
+    cv::Ptr<cv::ml::SVM> svm = cv::ml::SVM::create();
     // 2. Introducimos los parametros svm
     svm->setKernel(Kernel);
     svm->setC(C);
@@ -1454,8 +1452,7 @@ void fsiv_undistort_video_stream(cv::VideoCapture&input_stream,cv::VideoWriter& 
 {
     
     // 1. Creamos el arbol de decision
-    cv::Ptr<cv::ml::RTrees> rtrees;
-    rtrees = cv::ml::RTrees::create();
+    cv::Ptr<cv::ml::RTrees> rtrees = cv::ml::RTrees::create();
     // 2. Introducimos los parametros del arbol de decision
     rtrees->setActiveVarCount(V);
     rtrees->setTermCriteria(cv::TermCriteria(cv::TermCriteria::MAX_ITER + cv::TermCriteria::EPS, T, E));
@@ -1526,17 +1523,12 @@ void fsiv_undistort_video_stream(cv::VideoCapture&input_stream,cv::VideoWriter& 
  * @post ret_v != nullptr
  */
  
- cv::Ptr<cv::ml::StatModel>
-fsiv_load_svm_classifier_model(const std::string &model_fname)
+ cv::Ptr<cv::ml::StatModel> fsiv_load_svm_classifier_model(const std::string &model_fname)
 {
-    cv::Ptr<cv::ml::StatModel> clsf;
-
-    // TODO: load a SVM classifier.
+ 
     // Hint: use the generic interface cv::Algorithm::load< classifier_type >
-    clsf = cv::Algorithm::load<cv::ml::SVM>(model_fname);
-    //
-
-    CV_Assert(clsf != nullptr);
+    // 1. Cargamos el clasificador SVM
+    cv::Ptr<cv::ml::StatModel>  clsf = cv::Algorithm::load<cv::ml::SVM>(model_fname);
     return clsf;
 }
 
@@ -1548,52 +1540,12 @@ fsiv_load_svm_classifier_model(const std::string &model_fname)
  * @post ret_v != nullptr
  */
  
- cv::Ptr<cv::ml::StatModel>
-fsiv_load_rtrees_classifier_model(const std::string &model_fname)
+ cv::Ptr<cv::ml::StatModel> fsiv_load_rtrees_classifier_model(const std::string &model_fname)
 {
-    cv::Ptr<cv::ml::StatModel> clsf;
-
-    // TODO: load a RTrees classifier.
+    
     // Hint: use the generic interface cv::Algorithm::load< classifier_type >
-    clsf = cv::Algorithm::load<cv::ml::RTrees>(model_fname);
-    //
-
-    CV_Assert(clsf != nullptr);
-    return clsf;
-}
-
-/**
- * @brief Load a classifier model from a file storage.
- * 
- * @param[in] model_fname  is the file storage pathname.
- * @param[out] clsf_id is the loaded classifier id.
- * @return the classifier instance. 
- */
- 
- cv::Ptr<cv::ml::StatModel>
-load_classifier_model(const std::string &model_fname, int& clsf_id)
-{
-    cv::FileStorage f;
-    cv::Ptr<cv::ml::StatModel> clsf;
-
-    f.open(model_fname, cv::FileStorage::READ);
-    auto node = f["fsiv_classifier_type"];
-    if (node.empty() || !node.isInt())
-        throw std::runtime_error("Could not find 'fsiv_classifier_type' "
-                                 "label in model file");    
-    node >> clsf_id;
-    f.release();
-    if (clsf_id == 0)
-        clsf = fsiv_load_knn_classifier_model(model_fname);
-    else if (clsf_id == 1)
-        clsf = fsiv_load_svm_classifier_model(model_fname);
-    else if (clsf_id == 2)
-        clsf = fsiv_load_rtrees_classifier_model(model_fname);
-    else
-        throw std::runtime_error("Unknown classifier id: " +
-                                 std::to_string(clsf_id));
-
-    CV_Assert(clsf != nullptr);
+    // 1. Cargamos los datos del clasificador RTress
+    cv::Ptr<cv::ml::StatModel> clsf = cv::Algorithm::load<cv::ml::RTrees>(model_fname);
     return clsf;
 }
 
@@ -1609,34 +1561,20 @@ load_classifier_model(const std::string &model_fname, int& clsf_id)
  * @return the confussion matrix.
  */
  
- cv::Mat
-fsiv_compute_confusion_matrix(const cv::Mat &true_labels,
-                              const cv::Mat &predicted_labels,
-                              int n_categories)
+ cv::Mat fsiv_compute_confusion_matrix(const cv::Mat &true_labels,const cv::Mat &predicted_labels,int n_categories)
 {
-    CV_Assert(true_labels.rows == predicted_labels.rows);
-    CV_Assert(true_labels.type() == CV_32SC1);
-    CV_Assert(predicted_labels.type() == CV_32SC1);
-    cv::Mat cmat = cv::Mat::zeros(n_categories, n_categories, CV_32F);
-
-    //TODO: Compute the confussion matrix.
-    //Remenber: Rows are the Ground Truth. Cols are the predictions.
     
+    //Remenber: Rows are the Ground Truth. Cols are the predictions.
+    // 1. Creamos la matriz de confusion
+    cv::Mat cmat = cv::Mat::zeros(n_categories, n_categories, CV_32F);
+    // 2. Computamos la matriz de confusion
     for(int i = 0; i < true_labels.rows; i++){
         int row = true_labels.at<int>(i);
-        if(row < 0){
-            row = 0;
-        }
         int col = predicted_labels.at<int>(i);
-        if(col < 0){
-            col = 0;
-        }
+        if(row < 0) row = 0;
+        if(col < 0) col = 0;
         cmat.at<float>(row, col) += 1;
     }
-
-    //
-    CV_Assert(std::abs(cv::sum(cmat)[0] - static_cast<double>(true_labels.rows)) <=
-              1.0e-6);
     return cmat;
 }
 
@@ -1649,34 +1587,21 @@ fsiv_compute_confusion_matrix(const cv::Mat &true_labels,
  
  float fsiv_compute_accuracy(const cv::Mat &cmat)
 {
-    CV_Assert(!cmat.empty() && cmat.type() == CV_32FC1);
-    CV_Assert(cmat.rows == cmat.cols && cmat.rows > 1);
-
+    
     float acc = 0.0;
-
-    //TODO: compute the accuracy.
-    //Hint: the accuracy is the rate of correct classifications
-    //  to the total.
-    //Remenber: avoid zero divisions!!.
-    // total = np.sum(cmat)
-    float total = 0;
+    //Hint: the accuracy is the rate of correct classifications to the total. Remenber: avoid zero divisions!!.
+    // 1. Calculamos el total de la matriz de confusion
     for(int i = 0; i < cmat.rows; i++){
-        for(int j = 0; j < cmat.cols; j++){
-            total += cmat.at<float>(i, j);
-        }
+        for(int j = 0; j < cmat.cols; j++) acc += cmat.at<float>(i, j);
     }
-    // if total > 0.0
-    if(total > 0.0){
-        // diag = np.sum(np.diag(cmat))
+    // 2. Calculamos accuracy
+    if(acc > 0.0){
+        // 2.1. Calculamos la diagonal de la matriz de confusion
         float diag = 0;
-        for(int i = 0; i < cmat.rows; i++){
-            diag += cmat.at<float>(i, i);
-        }
-        // acc = diag / total
+        for(int i = 0; i < cmat.rows; i++) diag += cmat.at<float>(i, i);
+        // 2.2. Calculamos la accuracy
         acc = diag / total;
     }
-    //
-    CV_Assert(acc >= 0.0f && acc <= 1.0f);
     return acc;
 }
 
@@ -1689,56 +1614,13 @@ fsiv_compute_confusion_matrix(const cv::Mat &true_labels,
  
  float fsiv_compute_mean_recognition_rate(const std::vector<float> &rr)
 {
-    float m_rr = 0.0;
-    //TODO
+    
     //Remenber: the MRR is the mean value of the recognition rates.
-    // total = np.sum(rr)
-    float total = 0;
-    for(int i = 0; i < rr.size(); i++){
-        total += rr[i];
-    }
-    // if total > 0.0
-    if(total > 0.0){
-        // m_rr = total / len(rr)
-        m_rr = total / rr.size();
-    }
-    
-    //
+    float m_rr = 0.0;
+    // 1. Calculamos el ratio medio de reconocimiento
+    for(int i = 0; i < rr.size(); i++) m_rr += rr[i];
+    if(m_rr > 0.0) m_rr = total / rr.size();
     return m_rr;
-}
-
-/**
- * @brief Output model metrics.
- * 
- * @param gt_labels are supervised labels.
- * @param predicted_labels are predicted labels.
- * @param categories is a vector with the categories names.
- * @param out is the stream to print out.
- */
- 
- void print_model_metrics(const cv::Mat &gt_labels,
-                         const cv::Mat &predicted_labels,
-                         const std::vector<std::string>& categories,
-                         std::ostream &out)
-{
-    cv::Mat cmat = fsiv_compute_confusion_matrix(gt_labels, predicted_labels,
-                                                 categories.size());
-    float acc = fsiv_compute_accuracy(cmat);
-    std::vector<float> rr = fsiv_compute_recognition_rates(cmat);
-    float m_rr = fsiv_compute_mean_recognition_rate(rr);
-    out << "#########################" << std::endl;
-    out << "Model metrics:         " << std::endl;
-    out << std::endl;
-    out << "Recognition rate per class:" << std::endl;
-    for (size_t i = 0; i < rr.size(); ++i)
-        out << std::setw(20) << std::setfill(' ')
-            << categories[i]
-            << ": " << rr[i] << std::endl;
-    out << std::endl;
-    out << "Mean recognition rate: " << m_rr << std::endl;
-    out << "Accuracy: " << acc << std::endl;
-    
-
 }
 
 /**
@@ -1748,30 +1630,19 @@ fsiv_compute_confusion_matrix(const cv::Mat &true_labels,
  * @return a vector with the recognition rate per category.
  */
  
- std::vector<float>
-fsiv_compute_recognition_rates(const cv::Mat &cmat)
+ std::vector<float> fsiv_compute_recognition_rates(const cv::Mat &cmat)
 {
-    CV_Assert(!cmat.empty() && cmat.type() == CV_32FC1);
-    CV_Assert(cmat.rows == cmat.cols);
+    
     std::vector<float> RR(cmat.rows);
-
     for (int category = 0; category < cmat.rows; ++category)
     {
         RR[category] = 0.0;
-
         //TODO: compute the recognition rate (RR) for the category.
         //Avoid zero divisions!!.
         //  to the total of samples of the category.
         float total = 0;
-        for(int i = 0; i < cmat.rows; i++){
-            total += cmat.at<float>(category, i);
-        }
-        if(total != 0){
-            RR[category] = cmat.at<float>(category, category) / total;
-        }
-
-        //
-        CV_Assert(RR[category] >= 0.0f && RR[category] <= 1.0f);
+        for(int i = 0; i < cmat.rows; i++) total += cmat.at<float>(category, i);
+        if(total != 0) RR[category] = cmat.at<float>(category, category) / total;        
     }
     return RR;
 }
